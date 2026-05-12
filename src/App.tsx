@@ -707,22 +707,6 @@ function App() {
           )}
         </aside>
 
-        <form className="npub-form" onSubmit={handleSubmit}>
-          <div className="npub-row">
-            <input
-              id="npub-input"
-              name="npub"
-              value={inputValue}
-              onChange={(event) => setInputValue(event.target.value)}
-              placeholder="Enter npub"
-              spellCheck={false}
-              autoComplete="off"
-            />
-            <button type="submit" disabled={isLoadingProfile || !inputValue.trim()}>
-              {isLoadingProfile ? 'Loading...' : 'Load'}
-            </button>
-          </div>
-        </form>
       </section>
     </main>
   )
