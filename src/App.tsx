@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { SimplePool, finalizeEvent, nip19, nip57, type EventTemplate } from 'nostr-tools'
 import './App.css'
@@ -6,7 +6,7 @@ import './App.css'
 const pool = new SimplePool()
 
 const RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net']
-const PRESET_AMOUNTS = [500, 1000, 5000, 10000]
+const PRESET_AMOUNTS = [1000, 10000]
 const DEFAULT_NOTE = 'Thanks for what you create on Nostr.'
 
 type Profile = {
@@ -54,18 +54,6 @@ function parseProfile(rawContent: string) {
   } catch {
     return null
   }
-}
-
-function normalizeWebsite(url?: string | null) {
-  if (!url) {
-    return null
-  }
-
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url
-  }
-
-  return `https://${url}`
 }
 
 function formatIdentity(profile: Profile | null, npub: string) {
@@ -325,7 +313,37 @@ async function checkInvoicePaid(verifyUrl: string) {
   return data.result === 'paid'
 }
 
+async function copyText(text: string) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text)
+      return true
+    }
+  } catch {
+    // Fall back for browsers like mobile Safari.
+  }
+
+  const textArea = document.createElement('textarea')
+  textArea.value = text
+  textArea.setAttribute('readonly', '')
+  textArea.style.position = 'fixed'
+  textArea.style.top = '0'
+  textArea.style.left = '0'
+  textArea.style.opacity = '0'
+  document.body.appendChild(textArea)
+  textArea.focus()
+  textArea.select()
+  textArea.setSelectionRange(0, text.length)
+
+  try {
+    return document.execCommand('copy')
+  } finally {
+    document.body.removeChild(textArea)
+  }
+}
+
 function App() {
+  const invoiceSectionRef = useRef<HTMLElement | null>(null)
   const [inputValue, setInputValue] = useState('')
   const [activeNpub, setActiveNpub] = useState<string | null>(null)
   const [routeError, setRouteError] = useState('')
@@ -340,6 +358,7 @@ function App() {
   const [isLoadingInvoice, setIsLoadingInvoice] = useState(false)
   const [copied, setCopied] = useState(false)
   const [copiedNpub, setCopiedNpub] = useState(false)
+  const [showNoteField, setShowNoteField] = useState(false)
   const [nip05Status, setNip05Status] = useState<Nip05Status>('idle')
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('idle')
 
@@ -383,6 +402,7 @@ function App() {
       setProfileError('')
       setNip05Status('idle')
       setPaymentStatus('idle')
+      setShowNoteField(false)
       return
     }
 
@@ -398,6 +418,7 @@ function App() {
       setLnurlPay(null)
       setNip05Status('idle')
       setPaymentStatus('idle')
+      setShowNoteField(false)
       setCopiedNpub(false)
 
       try {
@@ -467,6 +488,14 @@ function App() {
       cancelled = true
     }
   }, [profileState])
+
+  useEffect(() => {
+    if (!invoice?.pr) {
+      return
+    }
+
+    invoiceSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [invoice?.pr])
 
   useEffect(() => {
     const currentVerifyUrl = invoice?.verify
@@ -562,7 +591,6 @@ function App() {
     }
   }, [lnurlPay])
 
-  const website = normalizeWebsite(profileState?.profile?.website)
   const title = formatIdentity(profileState?.profile ?? null, activeNpub ?? '')
   const handle = formatHandle(profileState?.profile ?? null, activeNpub ?? '')
   const nip05Label =
@@ -619,8 +647,11 @@ function App() {
       return
     }
 
-    await navigator.clipboard.writeText(invoice.pr)
-    setCopied(true)
+    const didCopy = await copyText(invoice.pr)
+
+    if (didCopy) {
+      setCopied(true)
+    }
   }
 
   async function handleCopyNpub() {
@@ -628,8 +659,11 @@ function App() {
       return
     }
 
-    await navigator.clipboard.writeText(activeNpub)
-    setCopiedNpub(true)
+    const didCopy = await copyText(activeNpub)
+
+    if (didCopy) {
+      setCopiedNpub(true)
+    }
   }
 
   if (!activeNpub) {
@@ -637,10 +671,8 @@ function App() {
       <main className="page-shell">
         <section className="landing-card">
           <span className="landing-kicker">Nostr tipping</span>
-          <h1>Create a donation page from any npub.</h1>
-          <p>
-            Paste a Nostr public key to generate a shareable Lightning tipping page.
-          </p>
+          <h1>Turn any npub into a tip page.</h1>
+          <p>Paste a Nostr public key and open a clean Lightning tipping page.</p>
 
           <form className="npub-form landing-form" onSubmit={handleSubmit}>
             <div className="npub-row">
@@ -667,13 +699,13 @@ function App() {
 
   return (
     <main className="page-shell">
-      <section className="content-stack">
-        <article className="profile-card">
+      <section className="content-stack app-layout">
+        <article className="profile-card profile-panel">
           <div
             className="banner"
             style={{
               backgroundImage: profileState?.profile?.banner
-                ? `linear-gradient(180deg, rgba(10, 12, 20, 0.05), rgba(10, 12, 20, 0.82)), url(${profileState.profile.banner})`
+                ? `url(${profileState.profile.banner})`
                 : undefined,
             }}
           >
@@ -696,60 +728,38 @@ function App() {
               </div>
             </div>
 
-            <p className="bio">
-              {profileState?.profile?.about ||
-                'A Nostr creator ready to receive direct Lightning support.'}
-            </p>
-
-            <div className="meta-row">
-              {profileState?.profile?.nip05 && (
-                <span
-                  className={
-                    nip05Status === 'verified'
-                      ? 'meta-badge nip05-badge verified'
-                      : nip05Status === 'invalid'
-                        ? 'meta-badge nip05-badge invalid'
-                        : 'meta-badge nip05-badge checking'
-                  }
-                >
-                  <span className="nip05-icon" aria-hidden="true">
-                    {nip05Status === 'verified' ? '✓' : nip05Status === 'invalid' ? '✕' : '•'}
+            <div className="profile-summary">
+              <div className="meta-row">
+                {profileState?.profile?.nip05 && (
+                  <span
+                    className={
+                      nip05Status === 'verified'
+                        ? 'meta-badge nip05-badge verified'
+                        : nip05Status === 'invalid'
+                          ? 'meta-badge nip05-badge invalid'
+                          : 'meta-badge nip05-badge checking'
+                    }
+                  >
+                    <span className="nip05-icon" aria-hidden="true">
+                      {nip05Status === 'verified' ? '✓' : nip05Status === 'invalid' ? '✕' : '•'}
+                    </span>
+                    <span>{profileState.profile.nip05}</span>
+                    <span className="nip05-label">{nip05Label}</span>
                   </span>
-                  <span>{profileState.profile.nip05}</span>
-                  <span className="nip05-label">{nip05Label}</span>
-                </span>
-              )}
-              {website && (
-                <a href={website} target="_blank" rel="noreferrer" className="meta-badge meta-link">
-                  Visit website
-                </a>
-              )}
-              <a
-                href={`https://primal.net/p/${activeNpub}`}
-                target="_blank"
-                rel="noreferrer"
-                className="meta-badge meta-link"
-              >
-                Visit profile
-              </a>
-              <button type="button" className="meta-badge meta-button" onClick={() => void handleCopyNpub()}>
-                <span>{activeNpub.slice(0, 18)}...{activeNpub.slice(-8)}</span>
-                <span className="meta-button-label">{copiedNpub ? 'Copied' : 'Copy npub'}</span>
-              </button>
+                )}
+                <button type="button" className="meta-badge meta-button" onClick={() => void handleCopyNpub()}>
+                  <span>{copiedNpub ? `✓ ${activeNpub.slice(0, 18)}...${activeNpub.slice(-8)}` : `${activeNpub.slice(0, 18)}...${activeNpub.slice(-8)}`}</span>
+                </button>
+              </div>
             </div>
 
             {profileError && <p className="error-box">{profileError}</p>}
           </div>
         </article>
 
-        <aside className="tip-card">
+        <aside className="tip-card tip-panel">
           <div className="tip-header">
-            <h3>Send sats</h3>
-            <p>
-              {amountRange
-                ? `Accepted range: ${amountRange.min} to ${amountRange.max} sats.`
-                : 'Lightning details will appear once the profile loads.'}
-            </p>
+            <h3>Send tip</h3>
           </div>
 
           <div className="amount-grid">
@@ -778,16 +788,31 @@ function App() {
             onChange={(event) => setSelectedAmount(Number(event.target.value))}
           />
 
-          <label className="field-label" htmlFor="tip-note">
-            Message
-          </label>
-          <textarea
-            id="tip-note"
-            className="field-input field-textarea"
-            value={note}
-            onChange={(event) => setNote(event.target.value)}
-            placeholder="Add a short note"
-          />
+          <div className="note-row">
+            <button
+              type="button"
+              className={showNoteField ? 'secondary-button note-toggle active' : 'secondary-button note-toggle'}
+              onClick={() => setShowNoteField((current) => !current)}
+            >
+              {showNoteField ? 'Hide note' : 'Add note'}
+            </button>
+            {!showNoteField && <p className="note-hint">Optional message for the zap.</p>}
+          </div>
+
+          {showNoteField && (
+            <>
+              <label className="field-label" htmlFor="tip-note">
+                Message
+              </label>
+              <textarea
+                id="tip-note"
+                className="field-input field-textarea"
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+                placeholder="Add a short note"
+              />
+            </>
+          )}
 
           <button
             type="button"
@@ -795,13 +820,19 @@ function App() {
             disabled={isLoadingProfile || isLoadingInvoice || !profileState || !lnurlPay || selectedAmount <= 0}
             onClick={() => void handleGenerateInvoice()}
           >
-            {isLoadingInvoice ? 'Generating invoice...' : 'Generate Lightning invoice'}
+            {isLoadingInvoice ? 'Generating invoice...' : 'Tip now'}
           </button>
 
           {invoiceError && <p className="error-box">{invoiceError}</p>}
 
+        </aside>
+
+      </section>
+
+      {(paymentStatus === 'paid' || invoice?.pr) && (
+        <section ref={invoiceSectionRef} className="invoice-section">
           {paymentStatus === 'paid' && (
-            <div className="payment-success-card">
+            <div className="payment-success-card invoice-stage-card">
               <span className="payment-success-kicker">Confirmed</span>
               <h4>Payment sent</h4>
               <p>The invoice has been paid and the donation was detected successfully.</p>
@@ -809,7 +840,12 @@ function App() {
           )}
 
           {invoice?.pr && paymentStatus !== 'paid' && (
-            <div className="invoice-card">
+            <div className="invoice-card invoice-stage-card">
+              <div className="invoice-stage-header">
+                <span className="landing-kicker">Invoice</span>
+                <h3>Complete your payment</h3>
+              </div>
+
               {paymentStatus !== 'unsupported' && (
                 <div className="payment-status-row">
                   <span className="payment-status-dot" aria-hidden="true" />
@@ -828,7 +864,7 @@ function App() {
               )}
 
               <div className="qr-wrap">
-                <QRCodeSVG value={invoice.pr} size={188} bgColor="transparent" fgColor="#f8fafc" />
+                <QRCodeSVG value={invoice.pr} size={188} bgColor="transparent" fgColor="#5a3a0a" />
               </div>
 
               <div className="invoice-copy">
@@ -837,8 +873,8 @@ function App() {
               </div>
 
               <div className="invoice-actions">
-                <button type="button" className="secondary-button" onClick={() => void handleCopyInvoice()}>
-                  {copied ? 'Copied' : 'Copy invoice'}
+                <button type="button" className="secondary-button invoice-copy-button" onClick={() => void handleCopyInvoice()}>
+                  <span>{copied ? '✓ Copy invoice' : 'Copy invoice'}</span>
                 </button>
                 {invoice.verify && (
                   <a href={invoice.verify} target="_blank" rel="noreferrer" className="secondary-link">
@@ -848,9 +884,8 @@ function App() {
               </div>
             </div>
           )}
-        </aside>
-
-      </section>
+        </section>
+      )}
     </main>
   )
 }
