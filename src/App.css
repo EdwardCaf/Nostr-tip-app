@@ -1,216 +1,245 @@
 .page-shell {
-  width: min(840px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 28px 0 36px;
+    width: min(840px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 28px 0 36px;
 }
 
 .content-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .invoice-section {
-  margin-top: 18px;
-  scroll-margin-top: 20px;
+    margin-top: 18px;
+    scroll-margin-top: 20px;
 }
 
 .invoice-stage-card {
-  width: 100%;
+    width: 100%;
 }
 
 .invoice-stage-header {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .invoice-stage-header h3 {
-  margin: 0;
-  color: #2e2418;
-  font-size: 1.5rem;
-  letter-spacing: -0.03em;
+    margin: 0;
+    color: #2e2418;
+    font-size: 1.5rem;
+    letter-spacing: -0.03em;
 }
 
 .app-layout {
-  align-items: start;
+    align-items: start;
 }
 
 .landing-card,
 .profile-card,
 .tip-card,
 .npub-form {
-  border: 1px solid rgba(120, 92, 52, 0.14);
-  background: rgba(255, 249, 239, 0.94);
-  box-shadow: 0 18px 44px rgba(102, 76, 35, 0.12);
+    border: 1px solid rgba(120, 92, 52, 0.14);
+    background: rgba(255, 249, 239, 0.94);
+    box-shadow: 0 18px 44px rgba(102, 76, 35, 0.12);
 }
 
 .landing-card {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 28px;
-  border-radius: 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 28px;
+    border-radius: 28px;
+    text-align: center;
 }
 
 .landing-kicker,
 .field-label {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 0.78rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #f0a61a;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #f0a61a;
 }
 
 .landing-card h1 {
-  margin: 0;
-  color: #2e2418;
-  font-size: clamp(2rem, 6vw, 3.7rem);
-  line-height: 0.96;
-  max-width: 11ch;
-  letter-spacing: -0.04em;
+    margin: 0;
+    color: #2e2418;
+    font-size: clamp(2rem, 6vw, 3.7rem);
+    line-height: 0.96;
+    max-width: 11ch;
+    letter-spacing: -0.04em;
 }
 
 .landing-card p {
-  margin: 0;
-  max-width: 40ch;
-  color: #6b5a45;
-  font-size: 0.98rem;
-  line-height: 1.56;
+    margin: 0;
+    max-width: 40ch;
+    color: #6b5a45;
+    font-size: 0.98rem;
+    line-height: 1.56;
 }
 
 .landing-form {
-  padding: 0;
-  border: none;
-  background: transparent;
-  box-shadow: none;
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
 }
 
 .profile-card,
 .tip-card,
 .npub-form {
-  border-radius: 24px;
-  overflow: hidden;
+    border-radius: 24px;
+    overflow: hidden;
 }
 
 .banner {
-  min-height: 160px;
-  background:
-    linear-gradient(180deg, rgba(255, 248, 238, 0.03), rgba(116, 83, 40, 0.06)),
-    radial-gradient(circle at top right, rgba(255, 178, 44, 0.18), transparent 30%),
-    linear-gradient(180deg, #f0dfc8 0%, #d9c1a0 100%);
-  background-size: cover;
-  background-position: center;
-  position: relative;
+    min-height: 160px;
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 248, 238, 0.03),
+            rgba(116, 83, 40, 0.06)
+        ),
+        radial-gradient(
+            circle at top right,
+            rgba(255, 178, 44, 0.18),
+            transparent 30%
+        ),
+        linear-gradient(180deg, #f0dfc8 0%, #d9c1a0 100%);
+    background-size: cover;
+    background-position: center;
+    position: relative;
 }
 
 .banner-fallback {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 18% 24%, rgba(255, 178, 44, 0.18), transparent 22%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 45%);
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(
+            circle at 18% 24%,
+            rgba(255, 178, 44, 0.18),
+            transparent 22%
+        ),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 45%);
 }
 
 .profile-body,
 .tip-card,
 .npub-form {
-  padding: 22px;
+    padding: 22px;
 }
 
 .identity-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-top: -18px;
-  position: relative;
-  z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: -18px;
+    position: relative;
+    z-index: 1;
 }
 
 .avatar-wrap {
-  border-radius: 24px;
-  padding: 6px;
-  background: #fff8ee;
-  border: 1px solid rgba(120, 92, 52, 0.12);
+    border-radius: 24px;
+    padding: 6px;
+    background: #fff8ee;
+    border: 1px solid rgba(120, 92, 52, 0.12);
 }
 
 .avatar,
 .avatar-fallback {
-  width: 84px;
-  height: 84px;
-  border-radius: 20px;
-  object-fit: cover;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, #f0d8b2, #d8b281);
-  color: #4f381d;
-  font-size: 2.3rem;
-  font-weight: 700;
+    width: 84px;
+    height: 84px;
+    border-radius: 20px;
+    object-fit: cover;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #f0d8b2, #d8b281);
+    color: #4f381d;
+    font-size: 2.3rem;
+    font-weight: 700;
 }
 
 .identity-copy h2,
 .tip-header h3 {
-  margin: 0 0 4px;
-  color: #2e2418;
+    margin: 0 0 4px;
+    color: #2e2418;
 }
 
 .identity-copy h2 {
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
-  line-height: 0.98;
-  letter-spacing: -0.04em;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    line-height: 0.98;
+    letter-spacing: -0.04em;
 }
 
 .tip-header h3 {
-  font-size: 1.5rem;
-  letter-spacing: -0.03em;
+    font-size: 1.5rem;
+    letter-spacing: -0.03em;
 }
 
 .handle,
+.bio,
 .tip-header p,
 .invoice-copy p,
 .npub-row input::placeholder {
-  color: #6b5a45;
+    color: #6b5a45;
+}
+
+.field-textarea::placeholder {
+    color: rgba(107, 90, 69, 0.56);
+}
+
+.bio {
+    margin: 0 0 6px;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .handle {
-  margin: 0;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 0.84rem;
+    margin: 0;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.84rem;
 }
 
 .profile-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 16px;
 }
 
 .meta-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  font-size: 0.88rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.88rem;
 }
 
 .meta-badge,
 .secondary-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 34px;
-  padding: 7px 11px;
-  border-radius: 999px;
-  border: 1px solid rgba(120, 92, 52, 0.14);
-  background: #fff4e4;
-  color: #3e301d;
-  text-decoration: none;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 7px 11px;
+    border-radius: 999px;
+    border: 1px solid rgba(120, 92, 52, 0.2);
+    background: #f8ead4;
+    color: #342615;
+    text-decoration: none;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.8rem;
 }
 
 .meta-link {
-  color: #3e301d;
+    color: #3e301d;
 }
 
 .meta-link:hover,
@@ -218,481 +247,483 @@
 .secondary-link:hover,
 .amount-chip:hover,
 .secondary-button:hover {
-  border-color: rgba(255, 178, 44, 0.42);
+    border-color: rgba(255, 178, 44, 0.42);
 }
 
 .meta-button {
-  font: inherit;
-  cursor: pointer;
+    font: inherit;
+    cursor: pointer;
 }
 
 .meta-button-label,
 .nip05-label {
-  color: #8b7353;
-  font-size: 0.78rem;
+    color: #725c40;
+    font-size: 0.78rem;
 }
 
 .nip05-badge.verified {
-  border-color: rgba(74, 222, 128, 0.28);
-  background: rgba(235, 249, 238, 0.96);
+    border-color: rgba(22, 163, 74, 0.34);
+    background: rgba(220, 252, 231, 0.98);
+    color: #166534;
 }
 
 .nip05-badge.invalid {
-  border-color: rgba(248, 113, 113, 0.26);
-  background: rgba(254, 241, 239, 0.96);
+    border-color: rgba(220, 38, 38, 0.34);
+    background: rgba(254, 226, 226, 0.98);
+    color: #b91c1c;
 }
 
 .nip05-badge.checking {
-  border-color: rgba(255, 178, 44, 0.28);
-  background: rgba(255, 242, 219, 0.96);
+    border-color: rgba(245, 158, 11, 0.32);
+    background: rgba(255, 247, 214, 0.98);
+    color: #b45309;
 }
 
 .nip05-icon {
-  font-weight: 700;
+    font-weight: 700;
 }
 
 .nip05-badge.verified .nip05-icon {
-  color: #4ade80;
+    color: #16a34a;
 }
 
 .nip05-badge.invalid .nip05-icon {
-  color: #f87171;
+    color: #dc2626;
 }
 
 .nip05-badge.checking .nip05-icon {
-  color: #f0a61a;
+    color: #d97706;
 }
 
 .tip-card {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
 }
 
 .tip-header p {
-  margin: 6px 0 0;
-  font-size: 0.9rem;
+    margin: 6px 0 0;
+    font-size: 0.9rem;
 }
 
 .amount-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
 }
 
 .npub-row {
-  display: flex;
-  gap: 12px;
+    display: flex;
+    gap: 12px;
 }
 
 .npub-row input,
 .field-input {
-  width: 100%;
-  border: 1px solid rgba(120, 92, 52, 0.14);
-  border-radius: 14px;
-  background: rgba(255, 252, 246, 0.96);
-  color: #2e2418;
-  padding: 12px 14px;
-  font: inherit;
+    width: 100%;
+    border: 1px solid rgba(120, 92, 52, 0.14);
+    border-radius: 14px;
+    background: rgba(255, 252, 246, 0.96);
+    color: #2e2418;
+    padding: 12px 14px;
+    font: inherit;
 }
 
 .npub-row input:focus,
 .field-input:focus {
-  outline: 2px solid rgba(255, 178, 44, 0.36);
-  outline-offset: 1px;
+    outline: 2px solid rgba(255, 178, 44, 0.36);
+    outline-offset: 1px;
 }
 
 .npub-row button,
 .primary-button,
 .secondary-button,
 .amount-chip {
-  border-radius: 14px;
-  border: 1px solid transparent;
-  font: inherit;
-  cursor: pointer;
-  transition:
-    border-color 0.18s ease,
-    background 0.18s ease,
-    transform 0.18s ease,
-    opacity 0.18s ease;
+    border-radius: 14px;
+    border: 1px solid transparent;
+    font: inherit;
+    cursor: pointer;
+    transition:
+        border-color 0.18s ease,
+        background 0.18s ease,
+        transform 0.18s ease,
+        opacity 0.18s ease;
 }
 
 .npub-row button,
 .primary-button {
-  background: #ffd05c;
-  color: #2a1d0f;
-  font-weight: 700;
-  padding: 12px 16px;
+    background: #ffd05c;
+    color: #2a1d0f;
+    font-weight: 700;
+    padding: 12px 16px;
 }
 
 .npub-row button:hover,
 .primary-button:hover,
 .amount-chip:hover,
 .secondary-button:hover {
-  transform: translateY(-1px);
+    transform: translateY(-1px);
 }
 
 .npub-row button:disabled,
 .primary-button:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  transform: none;
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .amount-chip {
-  padding: 12px;
-  background: #fff8ee;
-  color: #3e301d;
-  border-color: rgba(120, 92, 52, 0.14);
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 0.88rem;
+    padding: 12px;
+    background: #fff8ee;
+    color: #3e301d;
+    border-color: rgba(120, 92, 52, 0.14);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.88rem;
 }
 
 .amount-chip.active {
-  background: #ffd05c;
-  border-color: #ffb22c;
-  color: #2a1d0f;
+    background: #ffd05c;
+    border-color: #ffb22c;
+    color: #2a1d0f;
 }
 
 .field-textarea {
-  min-height: 82px;
-  resize: vertical;
+    min-height: 82px;
+    resize: vertical;
 }
 
 .note-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .note-toggle.active {
-  border-color: rgba(255, 178, 44, 0.42);
-}
-
-.note-hint {
-  margin: 0;
-  color: #8b7353;
-  font-size: 0.84rem;
+    border-color: rgba(255, 178, 44, 0.42);
 }
 
 .invoice-card {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  border-radius: 18px;
-  padding: 16px;
-  background: rgba(255, 244, 228, 0.82);
-  border: 1px solid rgba(120, 92, 52, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    border-radius: 18px;
+    padding: 16px;
+    background: rgba(255, 244, 228, 0.82);
+    border: 1px solid rgba(120, 92, 52, 0.12);
 }
 
 .payment-status-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 0.82rem;
-  color: #c98007;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.82rem;
+    color: #c98007;
 }
 
 .payment-status-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 999px;
-  background: #ffb22c;
-  box-shadow: 0 0 0 6px rgba(255, 178, 44, 0.16);
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: #ffb22c;
+    box-shadow: 0 0 0 6px rgba(255, 178, 44, 0.16);
 }
 
 .payment-note {
-  margin: 0;
-  color: #6b5a45;
-  font-size: 0.94rem;
-  line-height: 1.64;
+    margin: 0;
+    color: #6b5a45;
+    font-size: 0.94rem;
+    line-height: 1.64;
 }
 
 .payment-success-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 22px;
-  border-radius: 18px;
-  border: 1px solid rgba(74, 222, 128, 0.22);
-  background: rgba(235, 249, 238, 0.96);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 22px;
+    border-radius: 18px;
+    border: 1px solid rgba(74, 222, 128, 0.22);
+    background: rgba(235, 249, 238, 0.96);
 }
 
 .payment-success-kicker {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #4ade80;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #4ade80;
 }
 
 .payment-success-card h4 {
-  margin: 0;
-  color: #234229;
-  font-size: 1.5rem;
-  letter-spacing: -0.03em;
+    margin: 0;
+    color: #234229;
+    font-size: 1.5rem;
+    letter-spacing: -0.03em;
 }
 
 .payment-success-card p {
-  margin: 0;
-  color: #4d6a52;
-  line-height: 1.68;
+    margin: 0;
+    color: #4d6a52;
+    line-height: 1.68;
 }
 
 .qr-wrap {
-  align-self: center;
-  padding: 12px;
-  border-radius: 16px;
-  background: #fff8ee;
-  border: 1px solid rgba(120, 92, 52, 0.12);
+    align-self: center;
+    padding: 12px;
+    border-radius: 16px;
+    background: #fff8ee;
+    border: 1px solid rgba(120, 92, 52, 0.12);
 }
 
 .invoice-copy code {
-  display: block;
-  max-height: 120px;
-  overflow: auto;
-  white-space: pre-wrap;
-  word-break: break-all;
-  padding: 14px;
-  margin-top: 10px;
-  border-radius: 14px;
-  background: rgba(255, 249, 240, 0.96);
-  border: 1px solid rgba(120, 92, 52, 0.12);
-  color: #c98007;
+    display: block;
+    max-height: 120px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    padding: 14px;
+    margin-top: 10px;
+    border-radius: 14px;
+    background: rgba(255, 249, 240, 0.96);
+    border: 1px solid rgba(120, 92, 52, 0.12);
+    color: #c98007;
 }
 
 .invoice-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .secondary-button,
 .secondary-link {
-  background: #fff4e4;
-  color: #3e301d;
-  padding: 12px 14px;
+    background: #fff4e4;
+    color: #3e301d;
+    padding: 12px 14px;
 }
 
 .invoice-copy-button {
-  justify-content: space-between;
+    justify-content: space-between;
 }
 
 .error-box {
-  margin: 0;
-  padding: 14px 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(248, 113, 113, 0.26);
-  background: rgba(254, 241, 239, 0.96);
-  color: #b42318;
+    margin: 0;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(248, 113, 113, 0.26);
+    background: rgba(254, 241, 239, 0.96);
+    color: #b42318;
 }
 
 @media (max-width: 640px) {
-  .page-shell {
-    padding: 8px;
-  }
+    .page-shell {
+        padding: 8px;
+    }
 
-  .app-layout {
-    width: 100%;
-  }
+    .app-layout {
+        width: 100%;
+    }
 
-  .landing-card {
-    padding: 18px;
-  }
+    .landing-card {
+        padding: 18px;
+    }
 
-  .landing-card h1 {
-    font-size: clamp(1.8rem, 9vw, 2.4rem);
-  }
+    .landing-card h1 {
+        font-size: clamp(1.8rem, 9vw, 2.4rem);
+    }
 
-  .profile-body,
-  .tip-card,
-  .npub-form {
-    padding: 14px;
-  }
+    .profile-body,
+    .tip-card,
+    .npub-form {
+        padding: 14px;
+    }
 
-  .content-stack {
-    gap: 8px;
-  }
+    .content-stack {
+        gap: 8px;
+    }
 
-  .banner {
-    min-height: 130px;
-  }
+    .banner {
+        min-height: 130px;
+    }
 
-  .identity-row {
-    justify-content: center;
-    margin-top: 0;
-    gap: 10px;
-  }
+    .identity-row {
+        justify-content: center;
+        margin-top: 0;
+        gap: 10px;
+    }
 
-  .profile-body,
-  .tip-card,
-  .landing-card {
-    text-align: center;
-  }
+    .profile-body,
+    .tip-card,
+    .landing-card {
+        text-align: center;
+    }
 
-  .tip-card,
-  .profile-card,
-  .landing-card,
-  .npub-form {
-    width: 100%;
-    border-radius: 14px;
-  }
+    .tip-card,
+    .profile-card,
+    .landing-card,
+    .npub-form {
+        width: 100%;
+        border-radius: 14px;
+    }
 
-  .profile-panel {
-    flex: 0 0 auto;
-  }
+    .profile-panel {
+        flex: 0 0 auto;
+    }
 
-  .tip-panel {
-    flex: 0 0 auto;
-  }
+    .tip-panel {
+        flex: 0 0 auto;
+    }
 
-  .avatar,
-  .avatar-fallback {
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
-    font-size: 1.2rem;
-  }
+    .avatar,
+    .avatar-fallback {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        font-size: 1.2rem;
+    }
 
-  .avatar-wrap {
-    border-radius: 16px;
-    padding: 3px;
-  }
+    .avatar-wrap {
+        border-radius: 16px;
+        padding: 3px;
+    }
 
-  .identity-copy h2 {
-    font-size: 1.2rem;
-    margin-bottom: 2px;
-  }
+    .identity-copy h2 {
+        font-size: 1.2rem;
+        margin-bottom: 2px;
+    }
 
-  .handle {
-    font-size: 0.76rem;
-  }
+    .handle {
+        font-size: 0.76rem;
+    }
 
-  .profile-summary {
-    align-items: center;
-    gap: 8px;
-    margin-top: 10px;
-  }
+    .profile-summary {
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+    }
 
-  .meta-row {
-    justify-content: center;
-    gap: 6px;
-  }
+    .meta-row {
+        justify-content: center;
+        gap: 6px;
+    }
 
-  .amount-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-  }
+    .amount-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
 
-  .tip-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
+    .tip-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
 
-  .tip-header h3 {
-    font-size: 1.2rem;
-  }
+    .tip-header h3 {
+        font-size: 1.2rem;
+    }
 
-  .npub-row {
-    flex-direction: column;
-  }
+    .npub-row {
+        flex-direction: column;
+    }
 
-  .note-row,
-  .invoice-actions,
-  .payment-status-row {
-    justify-content: center;
-  }
+    .note-row,
+    .invoice-actions,
+    .payment-status-row {
+        justify-content: center;
+    }
 
-  .note-row {
-    flex-direction: column;
-    gap: 6px;
-  }
+    .note-row {
+        flex-direction: column;
+        gap: 6px;
+    }
 
-  .amount-chip,
-  .primary-button,
-  .secondary-button,
-  .secondary-link,
-  .field-input,
-  .npub-row input,
-  .npub-row button {
-    padding-top: 10px;
-    padding-bottom: 10px;
-  }
+    .amount-chip,
+    .primary-button,
+    .secondary-button,
+    .secondary-link,
+    .field-input,
+    .npub-row input,
+    .npub-row button {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
 
-  .amount-chip {
-    font-size: 0.8rem;
-  }
+    .amount-chip {
+        font-size: 0.8rem;
+    }
 
   .field-label,
-  .note-hint,
   .payment-status-row,
   .meta-badge,
   .secondary-link {
     font-size: 0.72rem;
   }
 
-  .field-textarea {
-    min-height: 64px;
+  .bio {
+    -webkit-line-clamp: 2;
+    font-size: 0.84rem;
+    margin-bottom: 4px;
   }
 
-  .note-toggle,
-  .primary-button,
-  .secondary-button,
-  .secondary-link {
-    width: 100%;
-  }
+    .field-textarea {
+        min-height: 64px;
+    }
 
-  .invoice-card {
-    padding: 10px;
-    gap: 10px;
-  }
+    .note-toggle,
+    .primary-button,
+    .secondary-button,
+    .secondary-link {
+        width: 100%;
+    }
 
-  .invoice-section {
-    margin-top: 8px;
-  }
+    .invoice-card {
+        padding: 10px;
+        gap: 10px;
+    }
 
-  .qr-wrap {
-    padding: 8px;
-  }
+    .invoice-section {
+        margin-top: 8px;
+    }
 
-  .invoice-copy {
-    text-align: left;
-  }
+    .qr-wrap {
+        padding: 8px;
+    }
 
-  .invoice-copy code {
-    max-height: 76px;
-    padding: 12px;
-  }
+    .invoice-copy {
+        text-align: left;
+    }
+
+    .invoice-copy code {
+        max-height: 76px;
+        padding: 12px;
+    }
 }
 
 @media (min-width: 900px) {
-  .page-shell {
-    width: min(840px, calc(100% - 48px));
-    padding: 24px 0 32px;
-  }
+    .page-shell {
+        width: min(840px, calc(100% - 48px));
+        padding: 24px 0 32px;
+    }
 
-  .app-layout {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-    align-items: center;
-  }
+    .app-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        align-items: center;
+    }
 
-  .profile-panel,
-  .tip-panel {
-    height: auto;
-    width: min(100%, 760px);
-  }
+    .profile-panel,
+    .tip-panel {
+        height: auto;
+        width: min(100%, 760px);
+    }
 
-  .invoice-section {
-    display: flex;
-    justify-content: center;
-  }
+    .invoice-section {
+        display: flex;
+        justify-content: center;
+    }
 
-  .invoice-stage-card {
-    width: min(100%, 760px);
-  }
+    .invoice-stage-card {
+        width: min(100%, 760px);
+    }
 }
