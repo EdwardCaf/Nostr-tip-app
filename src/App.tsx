@@ -434,6 +434,7 @@ function App() {
         setInputValue(pathNpub);
         setRouteError("");
       } else {
+        window.history.replaceState({}, "", "/");
         setActiveNpub(null);
         setInputValue("");
         setRouteError("That URL does not contain a valid npub.");
@@ -682,13 +683,23 @@ function App() {
     const nextNpub = npub.trim();
 
     if (!nextNpub) {
+      window.history.pushState({}, "", "/");
+      setActiveNpub(null);
+      setRouteError("That URL does not contain a valid npub.");
+      setInputValue("");
+      return;
+    }
+
+    if (!isValidNpub(nextNpub)) {
+      window.history.pushState({}, "", "/");
+      setActiveNpub(null);
+      setRouteError("That URL does not contain a valid npub.");
+      setInputValue(nextNpub);
       return;
     }
 
     window.history.pushState({}, "", buildProfilePath(nextNpub));
-    setRouteError(
-      isValidNpub(nextNpub) ? "" : "That URL does not contain a valid npub.",
-    );
+    setRouteError("");
     setActiveNpub(nextNpub);
     setInputValue(nextNpub);
   }
