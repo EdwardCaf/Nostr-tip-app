@@ -1,0 +1,411 @@
+.page-shell {
+  width: min(760px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 48px 0 64px;
+}
+
+.content-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.landing-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 40px;
+  border-radius: 32px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(15, 23, 42, 0.76);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.22);
+  backdrop-filter: blur(12px);
+}
+
+.landing-kicker {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #7dd3fc;
+}
+
+.landing-card h1 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: clamp(2.2rem, 7vw, 4.2rem);
+  line-height: 0.96;
+  max-width: 10ch;
+}
+
+.landing-card p {
+  margin: 0;
+  color: rgba(226, 232, 240, 0.76);
+  font-size: 1.02rem;
+  line-height: 1.7;
+  max-width: 44ch;
+}
+
+.landing-form {
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.npub-form,
+.profile-card,
+.tip-card {
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(15, 23, 42, 0.74);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.2);
+  backdrop-filter: blur(12px);
+}
+
+.profile-card,
+.tip-card,
+.npub-form {
+  border-radius: 28px;
+  overflow: hidden;
+}
+
+.banner {
+  min-height: 220px;
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.32), transparent 30%),
+    radial-gradient(circle at top right, rgba(139, 92, 246, 0.26), transparent 28%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.32), rgba(2, 6, 23, 0.88));
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.banner-fallback {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(34, 211, 238, 0.28), transparent 26%),
+    radial-gradient(circle at 82% 0%, rgba(192, 132, 252, 0.24), transparent 34%);
+}
+
+.profile-body,
+.tip-card,
+.npub-form {
+  padding: 28px;
+}
+
+.identity-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: -72px;
+  position: relative;
+  z-index: 1;
+}
+
+.avatar-wrap {
+  border-radius: 28px;
+  padding: 6px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.avatar,
+.avatar-fallback {
+  width: 112px;
+  height: 112px;
+  border-radius: 24px;
+  object-fit: cover;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #0f172a, #1d4ed8);
+  color: #f8fafc;
+  font-size: 2.4rem;
+  font-weight: 800;
+}
+
+.identity-copy h2,
+.tip-header h3 {
+  margin: 8px 0 4px;
+  color: #f8fafc;
+}
+
+.identity-copy h2 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.02;
+}
+
+.tip-header h3 {
+  font-size: 1.4rem;
+}
+
+.meta-badge,
+.secondary-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  text-decoration: none;
+  color: #dbe4f0;
+  background: rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.bio,
+.handle,
+.tip-header p,
+.invoice-copy p,
+.npub-row input::placeholder {
+  color: rgba(226, 232, 240, 0.72);
+}
+
+.handle {
+  margin-bottom: 0;
+}
+
+.bio {
+  font-size: 1rem;
+  line-height: 1.72;
+  margin: 20px 0 18px;
+}
+
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.meta-link {
+  color: #f8fafc;
+}
+
+.meta-button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.meta-button-label {
+  color: rgba(226, 232, 240, 0.64);
+  font-size: 0.82rem;
+}
+
+.nip05-badge.verified {
+  border-color: rgba(74, 222, 128, 0.28);
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.nip05-badge.invalid {
+  border-color: rgba(248, 113, 113, 0.3);
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.nip05-badge.checking {
+  border-color: rgba(125, 211, 252, 0.24);
+}
+
+.nip05-icon {
+  font-weight: 800;
+}
+
+.nip05-badge.verified .nip05-icon {
+  color: #4ade80;
+}
+
+.nip05-badge.invalid .nip05-icon {
+  color: #f87171;
+}
+
+.nip05-badge.checking .nip05-icon {
+  color: #7dd3fc;
+}
+
+.nip05-label {
+  color: rgba(226, 232, 240, 0.64);
+  font-size: 0.82rem;
+}
+
+.tip-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.amount-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.field-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.npub-row {
+  display: flex;
+  gap: 12px;
+}
+
+.npub-row input,
+.field-input {
+  width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.62);
+  color: #f8fafc;
+  padding: 14px 16px;
+  font: inherit;
+}
+
+.npub-row input:focus,
+.field-input:focus {
+  outline: 2px solid rgba(125, 211, 252, 0.36);
+  outline-offset: 1px;
+}
+
+.npub-row button,
+.primary-button,
+.secondary-button,
+.amount-chip {
+  border: none;
+  border-radius: 16px;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    opacity 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.npub-row button,
+.primary-button {
+  background: linear-gradient(135deg, #67e8f9, #a78bfa);
+  color: #020617;
+  font-weight: 800;
+  padding: 14px 18px;
+}
+
+.npub-row button:hover,
+.primary-button:hover,
+.secondary-button:hover,
+.amount-chip:hover {
+  transform: translateY(-1px);
+}
+
+.npub-row button:disabled,
+.primary-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.amount-chip {
+  padding: 14px;
+  background: rgba(30, 41, 59, 0.72);
+  color: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.amount-chip.active {
+  background: rgba(103, 232, 249, 0.14);
+  border-color: rgba(125, 211, 252, 0.32);
+}
+
+.field-textarea {
+  min-height: 108px;
+  resize: vertical;
+}
+
+.invoice-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-radius: 22px;
+  padding: 18px;
+  background: rgba(2, 6, 23, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.qr-wrap {
+  align-self: center;
+  padding: 14px;
+  border-radius: 20px;
+  background: rgba(15, 23, 42, 0.86);
+}
+
+.invoice-copy code {
+  display: block;
+  max-height: 120px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  padding: 14px;
+  margin-top: 10px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.88);
+  color: #bae6fd;
+}
+
+.invoice-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.secondary-button,
+.secondary-link {
+  background: rgba(148, 163, 184, 0.1);
+  color: #f8fafc;
+  padding: 12px 14px;
+}
+
+.error-box {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  color: #fecaca;
+}
+
+@media (max-width: 640px) {
+  .page-shell {
+    width: calc(100% - 20px);
+    padding: 24px 0 32px;
+  }
+
+  .landing-card {
+    padding: 24px;
+  }
+
+  .profile-body,
+  .tip-card,
+  .npub-form {
+    padding: 20px;
+  }
+
+  .identity-row {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-top: -58px;
+  }
+
+  .avatar,
+  .avatar-fallback {
+    width: 92px;
+    height: 92px;
+  }
+
+  .amount-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .npub-row {
+    flex-direction: column;
+  }
+}
