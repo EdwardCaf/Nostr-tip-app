@@ -394,6 +394,13 @@ async function copyText(text: string) {
   }
 }
 
+function resetCopiedState(setter: React.Dispatch<React.SetStateAction<boolean>>) {
+  setter(true);
+  window.setTimeout(() => {
+    setter(false);
+  }, 3000);
+}
+
 function App() {
   const invoiceSectionRef = useRef<HTMLElement | null>(null);
   const [inputValue, setInputValue] = useState("");
@@ -411,6 +418,7 @@ function App() {
   const [isLoadingInvoice, setIsLoadingInvoice] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copiedNpub, setCopiedNpub] = useState(false);
+  const [copiedLightning, setCopiedLightning] = useState(false);
   const [showNoteField, setShowNoteField] = useState(false);
   const [nip05Status, setNip05Status] = useState<Nip05Status>("idle");
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("idle");
@@ -457,6 +465,7 @@ function App() {
       setNip05Status("idle");
       setPaymentStatus("idle");
       setShowNoteField(false);
+      setCopiedLightning(false);
       setSelectedAmount(1000);
       setCustomAmountInput("1000");
       return;
@@ -476,6 +485,7 @@ function App() {
       setPaymentStatus("idle");
       setShowNoteField(false);
       setCopiedNpub(false);
+      setCopiedLightning(false);
       setSelectedAmount(1000);
       setCustomAmountInput("1000");
 
@@ -659,6 +669,7 @@ function App() {
   const handle = formatHandle(profileState?.profile ?? null, activeNpub ?? "");
   const websiteUrl = normalizeWebsiteUrl(profileState?.profile.website);
   const websiteLabel = websiteUrl?.hostname.replace(/^www\./, "") ?? null;
+  const lightningAddress = profileState?.profile.lud16 ?? null;
   const lightningLabel = profileState?.profile.lud16 ?? (profileState?.profile.lud06 ? "LNURL enabled" : null);
   const nip05Label =
     nip05Status === "verified"
@@ -686,6 +697,7 @@ function App() {
     event.preventDefault();
     setCopied(false);
     setCopiedNpub(false);
+    setCopiedLightning(false);
     navigateToNpub(inputValue);
   }
 
@@ -697,6 +709,7 @@ function App() {
     setIsLoadingInvoice(true);
     setInvoiceError("");
     setCopied(false);
+    setCopiedLightning(false);
     setPaymentStatus("idle");
 
     try {
@@ -727,7 +740,7 @@ function App() {
     const didCopy = await copyText(invoice.pr);
 
     if (didCopy) {
-      setCopied(true);
+      resetCopiedState(setCopied);
     }
   }
 
@@ -739,7 +752,19 @@ function App() {
     const didCopy = await copyText(activeNpub);
 
     if (didCopy) {
-      setCopiedNpub(true);
+      resetCopiedState(setCopiedNpub);
+    }
+  }
+
+  async function handleCopyLightning() {
+    if (!lightningAddress) {
+      return;
+    }
+
+    const didCopy = await copyText(lightningAddress);
+
+    if (didCopy) {
+      resetCopiedState(setCopiedLightning);
     }
   }
 
@@ -873,7 +898,19 @@ function App() {
                     <span className="meta-button-label">{websiteLabel}</span>
                   </a>
                 )}
-                {lightningLabel && (
+                {lightningAddress && (
+                  <button
+                    type="button"
+                    className="meta-badge meta-button"
+                    onClick={() => void handleCopyLightning()}
+                  >
+                    <span>Lightning</span>
+                    <span className="meta-button-label">
+                      {copiedLightning ? `✓ ${lightningAddress}` : lightningAddress}
+                    </span>
+                  </button>
+                )}
+                {!lightningAddress && lightningLabel && (
                   <span className="meta-badge">
                     <span>Lightning</span>
                     <span className="meta-button-label">{lightningLabel}</span>
