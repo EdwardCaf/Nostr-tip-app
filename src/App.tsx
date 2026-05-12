@@ -43,6 +43,10 @@ type InvoiceState = {
 }
 
 type Nip05Status = 'idle' | 'checking' | 'verified' | 'invalid'
+type PaymentStatus = 'idle' | 'awaiting' | 'paid' | 'unsupported'
+
+const PAYMENT_POLL_INTERVAL_MS = 3000
+const PAYMENT_POLL_TIMEOUT_MS = 120000
 
 function parseProfile(rawContent: string) {
   try {
@@ -294,6 +298,33 @@ async function fetchInvoice(
   return data
 }
 
+async function checkInvoicePaid(verifyUrl: string) {
+  const response = await fetch(verifyUrl)
+
+  if (!response.ok) {
+    throw new Error('Unable to verify invoice payment status.')
+  }
+
+  const data = (await response.json()) as {
+    status?: string
+    settled?: boolean
+    paid?: boolean
+    preimage?: string
+    pr?: string
+    result?: string
+  }
+
+  if (data.status === 'ERROR') {
+    return false
+  }
+
+  if (data.settled === true || data.paid === true || typeof data.preimage === 'string') {
+    return true
+  }
+
+  return data.result === 'paid'
+}
+
 function App() {
   const [inputValue, setInputValue] = useState('')
   const [activeNpub, setActiveNpub] = useState<string | null>(null)
@@ -310,6 +341,7 @@ function App() {
   const [copied, setCopied] = useState(false)
   const [copiedNpub, setCopiedNpub] = useState(false)
   const [nip05Status, setNip05Status] = useState<Nip05Status>('idle')
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('idle')
 
   useEffect(() => {
     const pathNpub = getPathNpub(window.location.pathname)
@@ -350,6 +382,7 @@ function App() {
       setInvoice(null)
       setProfileError('')
       setNip05Status('idle')
+      setPaymentStatus('idle')
       return
     }
 
@@ -364,6 +397,7 @@ function App() {
       setInvoice(null)
       setLnurlPay(null)
       setNip05Status('idle')
+      setPaymentStatus('idle')
       setCopiedNpub(false)
 
       try {
@@ -434,6 +468,89 @@ function App() {
     }
   }, [profileState])
 
+  useEffect(() => {
+    const currentVerifyUrl = invoice?.verify
+
+    if (!invoice?.pr) {
+      setPaymentStatus('idle')
+      return
+    }
+
+    if (!currentVerifyUrl) {
+      setPaymentStatus('unsupported')
+      return
+    }
+
+    const verifyUrl = currentVerifyUrl
+
+    let cancelled = false
+    let timeoutId: number | undefined
+    let intervalId: number | undefined
+
+    async function pollPayment() {
+      try {
+        const isPaid = await checkInvoicePaid(verifyUrl)
+
+        if (cancelled) {
+          return
+        }
+
+        if (isPaid) {
+          setPaymentStatus('paid')
+
+          if (intervalId) {
+            window.clearInterval(intervalId)
+          }
+
+          if (timeoutId) {
+            window.clearTimeout(timeoutId)
+          }
+        }
+      } catch {
+        if (!cancelled) {
+          setPaymentStatus('unsupported')
+
+          if (intervalId) {
+            window.clearInterval(intervalId)
+          }
+
+          if (timeoutId) {
+            window.clearTimeout(timeoutId)
+          }
+        }
+      }
+    }
+
+    setPaymentStatus('awaiting')
+    void pollPayment()
+
+    intervalId = window.setInterval(() => {
+      void pollPayment()
+    }, PAYMENT_POLL_INTERVAL_MS)
+
+    timeoutId = window.setTimeout(() => {
+      if (!cancelled) {
+        setPaymentStatus('unsupported')
+      }
+
+      if (intervalId) {
+        window.clearInterval(intervalId)
+      }
+    }, PAYMENT_POLL_TIMEOUT_MS)
+
+    return () => {
+      cancelled = true
+
+      if (intervalId) {
+        window.clearInterval(intervalId)
+      }
+
+      if (timeoutId) {
+        window.clearTimeout(timeoutId)
+      }
+    }
+  }, [invoice])
+
   const amountRange = useMemo(() => {
     if (!lnurlPay) {
       return null
@@ -483,6 +600,7 @@ function App() {
     setIsLoadingInvoice(true)
     setInvoiceError('')
     setCopied(false)
+    setPaymentStatus('idle')
 
     try {
       const nextInvoice = await fetchInvoice(lnurlPay, selectedAmount, note, profileState.pubkey)
@@ -682,8 +800,33 @@ function App() {
 
           {invoiceError && <p className="error-box">{invoiceError}</p>}
 
-          {invoice?.pr && (
+          {paymentStatus === 'paid' && (
+            <div className="payment-success-card">
+              <span className="payment-success-kicker">Confirmed</span>
+              <h4>Payment sent</h4>
+              <p>The invoice has been paid and the donation was detected successfully.</p>
+            </div>
+          )}
+
+          {invoice?.pr && paymentStatus !== 'paid' && (
             <div className="invoice-card">
+              {paymentStatus !== 'unsupported' && (
+                <div className="payment-status-row">
+                  <span className="payment-status-dot" aria-hidden="true" />
+                  <span>
+                    {paymentStatus === 'awaiting'
+                      ? 'Waiting for payment confirmation...'
+                      : 'Preparing payment confirmation...'}
+                  </span>
+                </div>
+              )}
+
+              {paymentStatus === 'unsupported' && (
+                <p className="payment-note">
+                  Live confirmation is unavailable for this invoice. You can still pay with the QR code below.
+                </p>
+              )}
+
               <div className="qr-wrap">
                 <QRCodeSVG value={invoice.pr} size={188} bgColor="transparent" fgColor="#f8fafc" />
               </div>
