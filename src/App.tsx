@@ -17,6 +17,7 @@ const RELAYS = [
   "wss://relay.primal.net",
 ];
 const PRESET_AMOUNTS = [1000, 10000];
+const DEFAULT_TIP_NOTE = "Sent via tipstr.app";
 
 type Profile = {
   name?: string;
@@ -446,7 +447,7 @@ function App() {
   const [invoice, setInvoice] = useState<InvoiceState | null>(null);
   const [selectedAmount, setSelectedAmount] = useState(1000);
   const [customAmountInput, setCustomAmountInput] = useState("1000");
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState(DEFAULT_TIP_NOTE);
   const [profileError, setProfileError] = useState("");
   const [invoiceError, setInvoiceError] = useState("");
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
@@ -526,6 +527,7 @@ function App() {
       setIsBioExpanded(false);
       setIsBioTruncated(false);
       setCopiedLightning(false);
+      setNote(DEFAULT_TIP_NOTE);
       setSelectedAmount(routeAmount ?? 1000);
       setCustomAmountInput(String(routeAmount ?? 1000));
       return;
@@ -548,6 +550,7 @@ function App() {
       setIsBioTruncated(false);
       setCopiedNpub(false);
       setCopiedLightning(false);
+      setNote(DEFAULT_TIP_NOTE);
       setSelectedAmount(routeAmount ?? 1000);
       setCustomAmountInput(String(routeAmount ?? 1000));
 
@@ -613,7 +616,7 @@ function App() {
         const nextInvoice = await fetchInvoice(
           currentLnurlPay,
           currentRouteAmount,
-          "",
+          DEFAULT_TIP_NOTE,
           currentPubkey,
         );
         setInvoice(nextInvoice);
@@ -1164,7 +1167,7 @@ function App() {
                 className="field-input field-textarea"
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
-                placeholder="Add a short note"
+                placeholder={DEFAULT_TIP_NOTE}
               />
             </>
           )}
