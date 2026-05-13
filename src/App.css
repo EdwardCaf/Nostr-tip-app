@@ -135,7 +135,7 @@
 
 .identity-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 14px;
     margin-top: -18px;
     position: relative;
@@ -147,6 +147,12 @@
     padding: 6px;
     background: #fff8ee;
     border: 1px solid rgba(120, 92, 52, 0.12);
+    flex-shrink: 0;
+}
+
+.identity-copy {
+    flex: 1;
+    min-width: 0;
 }
 
 .avatar,
@@ -171,8 +177,9 @@
 
 .identity-copy h2 {
     font-size: clamp(1.8rem, 4vw, 2.8rem);
-    line-height: 0.98;
+    line-height: 1.02;
     letter-spacing: -0.04em;
+    overflow-wrap: anywhere;
 }
 
 .tip-header h3 {
@@ -200,6 +207,7 @@
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    overflow-wrap: anywhere;
 }
 
 .handle {
@@ -548,6 +556,7 @@
 
     .identity-row {
         justify-content: center;
+        align-items: flex-start;
         margin-top: 0;
         gap: 10px;
     }
@@ -590,6 +599,7 @@
     .identity-copy h2 {
         font-size: 1.2rem;
         margin-bottom: 2px;
+        line-height: 1.08;
     }
 
     .handle {
