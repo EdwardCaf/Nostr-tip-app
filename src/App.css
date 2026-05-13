@@ -210,6 +210,33 @@
     overflow-wrap: anywhere;
 }
 
+.bio-expanded {
+    display: block;
+    -webkit-line-clamp: unset;
+    -webkit-box-orient: initial;
+    overflow: visible;
+    white-space: pre-wrap;
+}
+
+.bio-toggle {
+    appearance: none;
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin: 0 0 8px;
+    color: #a06b11;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.bio-toggle:hover {
+    color: #7b5210;
+}
+
 .handle {
     margin: 0;
     font-family: "IBM Plex Mono", ui-monospace, monospace;
@@ -673,6 +700,11 @@
     -webkit-line-clamp: 2;
     font-size: 0.84rem;
     margin-bottom: 4px;
+  }
+
+  .bio-toggle {
+    margin-bottom: 6px;
+    font-size: 0.68rem;
   }
 
     .field-textarea {
