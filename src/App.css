@@ -627,10 +627,17 @@
         font-size: 1.2rem;
         margin-bottom: 2px;
         line-height: 1.08;
+        text-align: left;
+    }
+
+    .bio,
+    .bio-toggle {
+        text-align: left;
     }
 
     .handle {
         font-size: 0.76rem;
+        text-align: left;
     }
 
     .profile-summary {
@@ -697,7 +704,7 @@
   }
 
   .bio {
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3;
     font-size: 0.84rem;
     margin-bottom: 4px;
   }
