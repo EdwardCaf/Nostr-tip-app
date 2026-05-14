@@ -5,6 +5,7 @@ import {
   finalizeEvent,
   nip19,
   nip57,
+  type Event,
   type EventTemplate,
 } from "nostr-tools";
 import "./App.css";
@@ -12,12 +13,18 @@ import "./App.css";
 const pool = new SimplePool();
 
 const RELAYS = [
+  "wss://relay.primal.net",
   "wss://relay.damus.io",
   "wss://nos.lol",
-  "wss://relay.primal.net",
+  "wss://relay.snort.social",
+  "wss://purplepag.es",
+  "wss://offchain.pub",
 ];
 const PRESET_AMOUNTS = [1000, 10000];
 const DEFAULT_TIP_NOTE = "Sent via tipstr.app";
+const PRIMARY_PROFILE_RELAYS = RELAYS.slice(0, 2);
+const FALLBACK_PROFILE_RELAYS = RELAYS.slice(2);
+const PROFILE_FALLBACK_DELAY_MS = 3000;
 
 type Profile = {
   name?: string;
@@ -194,19 +201,97 @@ function buildAmountPath(npub: string, amount: number) {
 
 async function fetchProfile(npub: string): Promise<ProfileState> {
   const pubkey = decodeNpub(npub);
-  const event = await pool.get(RELAYS, { kinds: [0], authors: [pubkey] });
+  const filter = { kinds: [0], authors: [pubkey] };
 
-  if (!event) {
-    throw new Error("No profile metadata was found on the selected relays.");
-  }
+  return new Promise<ProfileState>((resolve, reject) => {
+    const activeSubscriptions = new Set<{ close?: () => void }>();
+    const closedRelays = new Set<string>();
+    let fallbackTimer: number | null = null;
+    let settled = false;
 
-  const profile = parseProfile(event.content);
+    const finish = (handler: () => void) => {
+      if (settled) {
+        return;
+      }
 
-  if (!profile) {
-    throw new Error("The profile metadata could not be parsed.");
-  }
+      settled = true;
 
-  return { pubkey, npub, profile };
+      if (fallbackTimer !== null) {
+        window.clearTimeout(fallbackTimer);
+      }
+
+      for (const subscription of activeSubscriptions) {
+        subscription.close?.();
+      }
+
+      activeSubscriptions.clear();
+      handler();
+    };
+
+    const maybeReject = () => {
+      if (settled) {
+        return;
+      }
+
+      if (closedRelays.size !== RELAYS.length) {
+        return;
+      }
+
+      finish(() => {
+        reject(
+          new Error(
+            "Unable to load profile metadata from available relays. Please try again in a moment.",
+          ),
+        );
+      });
+    };
+
+    const handleEvent = (event: Event) => {
+      const profile = parseProfile(event.content);
+
+      if (!profile) {
+        return;
+      }
+
+      finish(() => {
+        resolve({ pubkey, npub, profile });
+      });
+    };
+
+    const subscribeToRelays = (relays: string[]) => {
+      for (const relay of relays) {
+        const subscription = pool.subscribeMany(
+          [relay],
+          filter,
+          {
+            onevent: handleEvent,
+            oneose: () => {
+              closedRelays.add(relay);
+              activeSubscriptions.delete(subscription);
+              maybeReject();
+            },
+            onclose: () => {
+              closedRelays.add(relay);
+              activeSubscriptions.delete(subscription);
+              maybeReject();
+            },
+          },
+        );
+
+        activeSubscriptions.add(subscription);
+      }
+    };
+
+    subscribeToRelays(PRIMARY_PROFILE_RELAYS);
+
+    fallbackTimer = window.setTimeout(() => {
+      if (settled) {
+        return;
+      }
+
+      subscribeToRelays(FALLBACK_PROFILE_RELAYS);
+    }, PROFILE_FALLBACK_DELAY_MS);
+  });
 }
 
 async function verifyNip05(nip05: string, pubkey: string) {
