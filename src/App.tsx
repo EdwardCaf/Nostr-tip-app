@@ -150,7 +150,7 @@ function buildLnurlUrl(profile: Profile) {
     return decodeLud06(profile.lud06);
   }
 
-  throw new Error("This profile does not publish a Lightning address.");
+  throw new Error("This profile does not have a Lightning address.");
 }
 
 function parseLnurlPayUrl(rawUrl: string) {
@@ -260,23 +260,19 @@ async function fetchProfile(npub: string): Promise<ProfileState> {
 
     const subscribeToRelays = (relays: string[]) => {
       for (const relay of relays) {
-        const subscription = pool.subscribeMany(
-          [relay],
-          filter,
-          {
-            onevent: handleEvent,
-            oneose: () => {
-              closedRelays.add(relay);
-              activeSubscriptions.delete(subscription);
-              maybeReject();
-            },
-            onclose: () => {
-              closedRelays.add(relay);
-              activeSubscriptions.delete(subscription);
-              maybeReject();
-            },
+        const subscription = pool.subscribeMany([relay], filter, {
+          onevent: handleEvent,
+          oneose: () => {
+            closedRelays.add(relay);
+            activeSubscriptions.delete(subscription);
+            maybeReject();
           },
-        );
+          onclose: () => {
+            closedRelays.add(relay);
+            activeSubscriptions.delete(subscription);
+            maybeReject();
+          },
+        });
 
         activeSubscriptions.add(subscription);
       }
@@ -512,7 +508,9 @@ async function copyText(text: string) {
   }
 }
 
-function resetCopiedState(setter: React.Dispatch<React.SetStateAction<boolean>>) {
+function resetCopiedState(
+  setter: React.Dispatch<React.SetStateAction<boolean>>,
+) {
   setter(true);
   window.setTimeout(() => {
     setter(false);
@@ -683,7 +681,13 @@ function App() {
   }, [activeNpub, routeAmount]);
 
   useEffect(() => {
-    if (!activeNpub || !profileState || !lnurlPay || !routeAmount || invoice?.pr) {
+    if (
+      !activeNpub ||
+      !profileState ||
+      !lnurlPay ||
+      !routeAmount ||
+      invoice?.pr
+    ) {
       return;
     }
 
@@ -900,7 +904,9 @@ function App() {
   const websiteUrl = normalizeWebsiteUrl(profileState?.profile.website);
   const websiteLabel = websiteUrl?.hostname.replace(/^www\./, "") ?? null;
   const lightningAddress = profileState?.profile.lud16 ?? null;
-  const lightningLabel = profileState?.profile.lud16 ?? (profileState?.profile.lud06 ? "LNURL enabled" : null);
+  const lightningLabel =
+    profileState?.profile.lud16 ??
+    (profileState?.profile.lud06 ? "LNURL enabled" : null);
   const nip05Label =
     nip05Status === "verified"
       ? "Verified"
@@ -1022,7 +1028,9 @@ function App() {
     setCustomAmountInput(String(amount));
   }
 
-  function handleCustomAmountChange(event: React.ChangeEvent<HTMLInputElement>) {
+  function handleCustomAmountChange(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
     const nextValue = event.target.value;
     setCustomAmountInput(nextValue);
 
@@ -1173,7 +1181,9 @@ function App() {
                   >
                     <span>Lightning</span>
                     <span className="meta-button-label">
-                      {copiedLightning ? `✓ ${lightningAddress}` : lightningAddress}
+                      {copiedLightning
+                        ? `✓ ${lightningAddress}`
+                        : lightningAddress}
                     </span>
                   </button>
                 )}
