@@ -4,6 +4,15 @@
     padding: 28px 0 36px;
 }
 
+.home-shell {
+    height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 0 0 6vh;
+}
+
 .content-stack {
     display: flex;
     flex-direction: column;
@@ -553,6 +562,13 @@
 @media (max-width: 640px) {
     .page-shell {
         padding: 8px;
+    }
+
+    .home-shell {
+        height: 100dvh;
+        padding-top: 0;
+        padding-bottom: 6vh;
+        overflow: hidden;
     }
 
     .app-layout {

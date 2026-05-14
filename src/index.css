@@ -20,6 +20,12 @@ html {
   scroll-behavior: smooth;
 }
 
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -29,6 +35,11 @@ body {
     radial-gradient(circle at 18% 16%, rgba(255, 248, 238, 0.82), transparent 22%),
     linear-gradient(180deg, #f6edde 0%, #ebdcc5 100%);
   color: #2e2418;
+}
+
+body.home-page {
+  height: 100dvh;
+  overflow: hidden;
 }
 
 body::before {
@@ -67,4 +78,8 @@ p {
 
 #root {
   min-height: 100vh;
+}
+
+body.home-page #root {
+  height: 100%;
 }
