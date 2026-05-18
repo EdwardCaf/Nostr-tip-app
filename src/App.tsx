@@ -1051,9 +1051,34 @@ function App() {
       <main className="page-shell home-shell">
         <section className="landing-card">
           <span className="landing-kicker">Nostr tipping</span>
-          <h1>Turn any npub into a tip page.</h1>
+          <h1>Create your Nostr tip page.</h1>
           <p>
-            Paste a Nostr public key and open a clean Lightning tipping page.
+            Tipstr takes your <strong>Nostr</strong> public key and creates a
+            page you can share to receive <strong>Lightning</strong> tips.
+          </p>
+
+          <div className="landing-section landing-steps">
+            <h2>How to set it up</h2>
+            <ol>
+              <li>Create a <strong>Nostr</strong> account.</li>
+              <li>
+                Add a <strong>Lightning</strong> address to your{" "}
+                <strong>Nostr</strong> profile.
+              </li>
+              <li>
+                Paste your <strong>npub</strong> below to open your page.
+              </li>
+              <li>Share the link and start receiving tips.</li>
+            </ol>
+          </div>
+
+          <p className="landing-note">
+            New to <strong>Nostr</strong>? Try{" "}
+            <a href="https://primal.net" target="_blank" rel="noreferrer">
+              Primal.net
+            </a>{" "}
+            to create an account, set up your profile, and find your{" "}
+            <strong>npub</strong>.
           </p>
 
           <form className="npub-form landing-form" onSubmit={handleSubmit}>
@@ -1063,12 +1088,12 @@ function App() {
                 name="npub"
                 value={inputValue}
                 onChange={(event) => setInputValue(event.target.value)}
-                placeholder="Enter npub"
+                placeholder="Enter your npub"
                 spellCheck={false}
                 autoComplete="off"
               />
               <button type="submit" disabled={!inputValue.trim()}>
-                Open page
+                Create my page
               </button>
             </div>
           </form>

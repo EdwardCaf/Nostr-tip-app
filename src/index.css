@@ -38,8 +38,7 @@ body {
 }
 
 body.home-page {
-  height: 100dvh;
-  overflow: hidden;
+  min-height: 100dvh;
 }
 
 body::before {
