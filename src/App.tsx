@@ -1060,7 +1060,9 @@ function App() {
           <div className="landing-section landing-steps">
             <h2>How to set it up</h2>
             <ol>
-              <li>Create a <strong>Nostr</strong> account.</li>
+              <li>
+                Create a <strong>Nostr</strong> account.
+              </li>
               <li>
                 Add a <strong>Lightning</strong> address to your{" "}
                 <strong>Nostr</strong> profile.
@@ -1073,12 +1075,12 @@ function App() {
           </div>
 
           <p className="landing-note">
-            New to <strong>Nostr</strong>? Try{" "}
+            New to <strong>Nostr</strong>? Visit{" "}
             <a href="https://primal.net" target="_blank" rel="noreferrer">
               Primal.net
             </a>{" "}
             to create an account, set up your profile, and find your{" "}
-            <strong>npub</strong>.
+            <strong>npub</strong> and <strong>Lightning</strong> address.
           </p>
 
           <form className="npub-form landing-form" onSubmit={handleSubmit}>
@@ -1093,7 +1095,7 @@ function App() {
                 autoComplete="off"
               />
               <button type="submit" disabled={!inputValue.trim()}>
-                Create my page
+                Create my link
               </button>
             </div>
           </form>
