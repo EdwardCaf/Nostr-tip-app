@@ -5,7 +5,7 @@
   line-height: 1.5;
   font-weight: 400;
   color: #2e2418;
-  background: #ece3f7;
+  background: #f0e9f3;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -30,7 +30,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: linear-gradient(180deg, #ece3f7 0%, #f7eccf 38%, #f9e8bd 50%, #f7eccf 62%, #ece3f7 100%);
+  background: linear-gradient(180deg, #f0e9f3 0%, #f4ecdf 36%, #f6eddb 50%, #f4ecdf 64%, #f0e9f3 100%);
   color: #2e2418;
 }
 
