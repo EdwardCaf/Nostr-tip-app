@@ -64,6 +64,14 @@ type PaymentStatus = "idle" | "awaiting" | "paid" | "unsupported";
 
 const PAYMENT_POLL_INTERVAL_MS = 3000;
 const PAYMENT_POLL_TIMEOUT_MS = 120000;
+const builderCredit = (
+  <p className="builder-credit">
+    Built by{" "}
+    <a href="https://primal.net/edward" target="_blank" rel="noreferrer">
+      Edward
+    </a>
+  </p>
+);
 
 function parseProfile(rawContent: string) {
   try {
@@ -1102,6 +1110,7 @@ function App() {
 
           {routeError && <p className="error-box">{routeError}</p>}
         </section>
+        {builderCredit}
       </main>
     );
   }
@@ -1396,6 +1405,7 @@ function App() {
           )}
         </section>
       )}
+      {builderCredit}
     </main>
   );
 }

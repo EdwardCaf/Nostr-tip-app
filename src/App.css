@@ -1,12 +1,13 @@
 .page-shell {
     width: min(840px, calc(100% - 32px));
+    min-height: 100dvh;
     margin: 0 auto;
     padding: 28px 0 36px;
+    display: flex;
+    flex-direction: column;
 }
 
 .home-shell {
-    min-height: 100dvh;
-    display: flex;
     align-items: center;
     justify-content: center;
     padding: 28px 0 36px;
@@ -133,6 +134,34 @@
 
 .landing-note a:hover {
     color: #7b5210;
+}
+
+.builder-credit {
+    margin: 0;
+    padding-top: 18px;
+    color: rgba(107, 90, 69, 0.58);
+    font-size: 0.78rem;
+    text-align: center;
+}
+
+.page-shell > .builder-credit {
+    margin-top: auto;
+}
+
+.home-shell > .builder-credit {
+    margin-top: 12px;
+    padding-top: 0;
+}
+
+.builder-credit a {
+    color: inherit;
+    text-decoration-color: rgba(107, 90, 69, 0.28);
+    text-underline-offset: 0.16em;
+}
+
+.builder-credit a:hover {
+    color: #7b5210;
+    text-decoration-color: rgba(123, 82, 16, 0.5);
 }
 
 .landing-form {
@@ -614,10 +643,8 @@
     }
 
     .home-shell {
-        height: 100dvh;
         padding-top: 0;
-        padding-bottom: 6vh;
-        overflow: hidden;
+        padding-bottom: 18px;
     }
 
     .app-layout {
