@@ -347,10 +347,15 @@ async function fetchLnurlPay(profile: Profile) {
 
   if (
     data.tag !== "payRequest" ||
-    !data.callback ||
-    !data.minSendable ||
-    !data.maxSendable ||
-    !data.metadata
+    typeof data.callback !== "string" ||
+    !data.callback.trim() ||
+    typeof data.minSendable !== "number" ||
+    !Number.isFinite(data.minSendable) ||
+    typeof data.maxSendable !== "number" ||
+    !Number.isFinite(data.maxSendable) ||
+    data.maxSendable < data.minSendable ||
+    typeof data.metadata !== "string" ||
+    !data.metadata.trim()
   ) {
     throw new Error("Lightning pay details are incomplete.");
   }
@@ -655,14 +660,33 @@ function App() {
 
       try {
         const loadedProfile = await fetchProfile(npub);
-        const lnurlDetails = await fetchLnurlPay(loadedProfile.profile);
 
         if (cancelled) {
           return;
         }
 
         setProfileState(loadedProfile);
-        setLnurlPay(lnurlDetails);
+
+        try {
+          const lnurlDetails = await fetchLnurlPay(loadedProfile.profile);
+
+          if (cancelled) {
+            return;
+          }
+
+          setLnurlPay(lnurlDetails);
+        } catch (error) {
+          if (cancelled) {
+            return;
+          }
+
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Unable to load Lightning pay details.";
+          setLnurlPay(null);
+          setProfileError(message);
+        }
       } catch (error) {
         if (cancelled) {
           return;
