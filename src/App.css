@@ -60,10 +60,17 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     padding: 28px;
     border-radius: 28px;
     text-align: center;
+}
+
+.landing-intro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
 }
 
 .landing-kicker,
@@ -99,6 +106,10 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    padding: 14px 16px;
+    border: 1px solid rgba(92, 64, 130, 0.14);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.28);
     text-align: left;
 }
 
@@ -119,6 +130,15 @@
 
 .landing-steps li {
     line-height: 1.45;
+}
+
+.landing-section code {
+    padding: 0.1rem 0.28rem;
+    border-radius: 0.4rem;
+    background: rgba(240, 166, 26, 0.14);
+    color: #4f381d;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.9em;
 }
 
 .landing-note {

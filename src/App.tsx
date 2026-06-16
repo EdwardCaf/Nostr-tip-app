@@ -660,33 +660,14 @@ function App() {
 
       try {
         const loadedProfile = await fetchProfile(npub);
+        const lnurlDetails = await fetchLnurlPay(loadedProfile.profile);
 
         if (cancelled) {
           return;
         }
 
         setProfileState(loadedProfile);
-
-        try {
-          const lnurlDetails = await fetchLnurlPay(loadedProfile.profile);
-
-          if (cancelled) {
-            return;
-          }
-
-          setLnurlPay(lnurlDetails);
-        } catch (error) {
-          if (cancelled) {
-            return;
-          }
-
-          const message =
-            error instanceof Error
-              ? error.message
-              : "Unable to load Lightning pay details.";
-          setLnurlPay(null);
-          setProfileError(message);
-        }
+        setLnurlPay(lnurlDetails);
       } catch (error) {
         if (cancelled) {
           return;
@@ -1082,12 +1063,14 @@ function App() {
     return (
       <main className="page-shell home-shell">
         <section className="landing-card">
-          <span className="landing-kicker">Nostr tipping</span>
-          <h1>Create your Nostr tip page.</h1>
-          <p>
-            Tipstr takes your <strong>Nostr</strong> public key and creates a
-            page you can share to receive <strong>Lightning</strong> tips.
-          </p>
+          <div className="landing-intro">
+            <span className="landing-kicker">Nostr tipping</span>
+            <h1>Create your Nostr tip page.</h1>
+            <p>
+              Tipstr takes your <strong>Nostr</strong> public key and creates a
+              page you can share to receive <strong>Lightning</strong> tips.
+            </p>
+          </div>
 
           <div className="landing-section landing-steps">
             <h2>How to set it up</h2>
@@ -1104,6 +1087,15 @@ function App() {
               </li>
               <li>Share the link and start receiving tips.</li>
             </ol>
+          </div>
+
+          <div className="landing-section">
+            <h2>Pre-fill a tip amount</h2>
+            <p>
+              Add an amount in sats to the end of any tip link, like{" "}
+              <code>/npub1.../12000</code>, to automatically generate that
+              invoice when the page loads.
+            </p>
           </div>
 
           <p className="landing-note">
