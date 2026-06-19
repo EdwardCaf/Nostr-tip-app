@@ -85,11 +85,6 @@ type TipstrNameOwner = {
   event: Event;
 };
 
-type TipstrNameState = {
-  activeClaims: TipstrNameClaim[];
-  latestPointerByPubkey: Map<string, TipstrNameClaim>;
-};
-
 declare global {
   interface Window {
     nostr?: {
@@ -279,21 +274,36 @@ function compareEventsOldestFirst(left: Event, right: Event) {
   return left.id.localeCompare(right.id);
 }
 
-function getTipstrNameState(events: Event[]) {
-  const latestClaimByPubkey = new Map<string, TipstrNameClaim>();
+function getMatchingTipstrNameClaimPubkeys(events: Event[], name: string) {
+  const normalizedName = normalizeTipstrName(name);
+
+  return Array.from(
+    new Set(
+      events
+        .map(parseTipstrNameClaim)
+        .filter((claim): claim is TipstrNameClaim => Boolean(claim))
+        .filter((claim) => claim.name === normalizedName)
+        .map((claim) => claim.event.pubkey),
+    ),
+  );
+}
+
+function pickValidTipstrNameOwner(
+  claimEvents: Event[],
+  pointerEvents: Event[],
+  name: string,
+) {
+  const normalizedName = normalizeTipstrName(name);
   const latestPointerByPubkey = new Map<string, TipstrNameClaim>();
 
-  for (const event of events) {
+  for (const event of pointerEvents) {
     const claim = parseTipstrNameClaim(event);
 
-    if (!claim) {
+    if (!claim || getTag(event, "d") !== TIPSTR_NAME_D_TAG) {
       continue;
     }
 
-    const dTag = getTag(event, "d");
-    const isPointer = dTag === TIPSTR_NAME_D_TAG;
-    const map = isPointer ? latestPointerByPubkey : latestClaimByPubkey;
-    const current = map.get(event.pubkey);
+    const current = latestPointerByPubkey.get(event.pubkey);
 
     if (
       !current ||
@@ -301,44 +311,25 @@ function getTipstrNameState(events: Event[]) {
       (event.created_at === current.event.created_at &&
         event.id > current.event.id)
     ) {
-      map.set(event.pubkey, claim);
+      latestPointerByPubkey.set(event.pubkey, claim);
     }
   }
 
-  const activeClaims = Array.from(latestClaimByPubkey.values()).filter(
-    (claim) =>
-      latestPointerByPubkey.get(claim.event.pubkey)?.name === claim.name,
-  );
+  const matchingClaims = claimEvents
+    .map(parseTipstrNameClaim)
+    .filter((claim): claim is TipstrNameClaim => Boolean(claim))
+    .filter((claim) => claim.name === normalizedName)
+    .filter(
+      (claim) =>
+        latestPointerByPubkey.get(claim.event.pubkey)?.name === normalizedName,
+    )
+    .sort((left, right) => compareEventsOldestFirst(left.event, right.event));
 
-  return {
-    activeClaims,
-    latestPointerByPubkey,
-  } satisfies TipstrNameState;
-}
+  const owner = matchingClaims[0]?.event;
 
-function pickTipstrNameOwner(events: Event[], name: string) {
-  const normalizedName = normalizeTipstrName(name);
-  const { activeClaims, latestPointerByPubkey } = getTipstrNameState(events);
-  let matchingClaims = activeClaims.filter(
-    (claim) => claim.name === normalizedName,
-  );
-
-  if (!matchingClaims.length && !latestPointerByPubkey.size) {
-    matchingClaims = events
-      .map(parseTipstrNameClaim)
-      .filter((claim): claim is TipstrNameClaim => Boolean(claim))
-      .filter((claim) => claim.name === normalizedName);
-  }
-
-  if (!matchingClaims.length) {
+  if (!owner) {
     return null;
   }
-
-  matchingClaims.sort((left, right) =>
-    compareEventsOldestFirst(left.event, right.event),
-  );
-
-  const owner = matchingClaims[0].event;
 
   return {
     pubkey: owner.pubkey,
@@ -356,22 +347,51 @@ async function queryTipstrNameEvents(filter: Filter) {
 
 async function resolveTipstrName(name: string) {
   const normalizedName = normalizeTipstrName(name);
-  const directEvents = await queryTipstrNameEvents({
+  const directClaimEvents = await queryTipstrNameEvents({
     kinds: [TIPSTR_NAME_KIND],
-    "#d": [buildTipstrNameDTag(normalizedName), TIPSTR_NAME_D_TAG],
+    "#d": [buildTipstrNameDTag(normalizedName)],
   });
+  const claimPubkeys = getMatchingTipstrNameClaimPubkeys(
+    directClaimEvents,
+    normalizedName,
+  );
 
-  const directOrLegacyOwner = pickTipstrNameOwner(directEvents, normalizedName);
+  if (claimPubkeys.length) {
+    const pointerEvents = await queryTipstrNameEvents({
+      kinds: [TIPSTR_NAME_KIND],
+      authors: claimPubkeys,
+      "#d": [TIPSTR_NAME_D_TAG],
+    });
+    const directOwner = pickValidTipstrNameOwner(
+      directClaimEvents,
+      pointerEvents,
+      normalizedName,
+    );
 
-  if (directOrLegacyOwner) {
-    return directOrLegacyOwner;
+    if (directOwner) {
+      return directOwner;
+    }
   }
 
   const broadEvents = await queryTipstrNameEvents({
     kinds: [TIPSTR_NAME_KIND],
   });
+  const legacyClaimPubkeys = getMatchingTipstrNameClaimPubkeys(
+    broadEvents,
+    normalizedName,
+  );
 
-  return pickTipstrNameOwner(broadEvents, normalizedName);
+  if (!legacyClaimPubkeys.length) {
+    return null;
+  }
+
+  const pointerEvents = await queryTipstrNameEvents({
+    kinds: [TIPSTR_NAME_KIND],
+    authors: legacyClaimPubkeys,
+    "#d": [TIPSTR_NAME_D_TAG],
+  });
+
+  return pickValidTipstrNameOwner(broadEvents, pointerEvents, normalizedName);
 }
 
 async function fetchUserTipstrName(pubkey: string) {
