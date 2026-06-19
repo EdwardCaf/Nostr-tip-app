@@ -267,6 +267,30 @@
     overflow-wrap: anywhere;
 }
 
+.auth-loading-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    color: #725c40;
+    font-size: 0.84rem;
+}
+
+.auth-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(160, 107, 17, 0.22);
+    border-top-color: #a06b11;
+    border-radius: 999px;
+    animation: auth-spin 0.8s linear infinite;
+}
+
+@keyframes auth-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .landing-note {
     font-size: 0.88rem;
     color: #8a755a;
