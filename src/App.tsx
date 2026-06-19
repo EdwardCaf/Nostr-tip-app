@@ -1878,9 +1878,6 @@ function App() {
                   </>
                 )}
                 <p className="handle">{handle}</p>
-                {activeTipstrName && (
-                  <p className="tipstr-route-name">Tipstr link /{activeTipstrName}</p>
-                )}
               </div>
             </div>
 

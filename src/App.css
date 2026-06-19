@@ -259,8 +259,7 @@
     gap: 8px;
 }
 
-.signed-in-label,
-.tipstr-route-name {
+.signed-in-label {
     margin: 0;
     color: #725c40;
     font-family: "IBM Plex Mono", ui-monospace, monospace;
@@ -466,15 +465,10 @@
     color: #7b5210;
 }
 
-.handle,
-.tipstr-route-name {
+.handle {
     margin: 0;
     font-family: "IBM Plex Mono", ui-monospace, monospace;
     font-size: 0.84rem;
-}
-
-.tipstr-route-name {
-    color: #a06b11;
 }
 
 .profile-summary {
@@ -919,8 +913,7 @@
         text-align: left;
     }
 
-    .handle,
-    .tipstr-route-name {
+    .handle {
         font-size: 0.76rem;
         text-align: left;
     }
