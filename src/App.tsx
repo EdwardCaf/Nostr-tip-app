@@ -5,8 +5,9 @@ import {
   finalizeEvent,
   nip19,
   nip57,
-  type Event,
   type EventTemplate,
+  type Event,
+  type Filter,
 } from "nostr-tools";
 import "./App.css";
 
@@ -25,6 +26,11 @@ const DEFAULT_TIP_NOTE = "Sent via tipstr.app";
 const PRIMARY_PROFILE_RELAYS = RELAYS.slice(0, 2);
 const FALLBACK_PROFILE_RELAYS = RELAYS.slice(2);
 const PROFILE_FALLBACK_DELAY_MS = 3000;
+const TIPSTR_NAME_KIND = 30078;
+const TIPSTR_NAME_D_TAG = "tipstr-profile";
+const TIPSTR_NAME_D_TAG_PREFIX = "tipstr-name:";
+const TIPSTR_NAME_QUERY_WAIT_MS = 5000;
+const TIPSTR_NAME_PUBLISH_WAIT_MS = 6000;
 
 type Profile = {
   name?: string;
@@ -62,13 +68,44 @@ type InvoiceState = {
 type Nip05Status = "idle" | "checking" | "verified" | "invalid";
 type PaymentStatus = "idle" | "awaiting" | "paid" | "unsupported";
 
+type SignedInUser = {
+  pubkey: string;
+  npub: string;
+};
+
+type TipstrNameClaim = {
+  event: Event;
+  name: string;
+};
+
+type TipstrNameOwner = {
+  pubkey: string;
+  npub: string;
+  name: string;
+  event: Event;
+};
+
+type TipstrNameState = {
+  activeClaims: TipstrNameClaim[];
+  latestPointerByPubkey: Map<string, TipstrNameClaim>;
+};
+
+declare global {
+  interface Window {
+    nostr?: {
+      getPublicKey: () => Promise<string>;
+      signEvent: (event: EventTemplate) => Promise<Event>;
+    };
+  }
+}
+
 const PAYMENT_POLL_INTERVAL_MS = 3000;
 const PAYMENT_POLL_TIMEOUT_MS = 120000;
 const builderCredit = (
   <p className="builder-credit">
     Built by{" "}
     <a href="https://primal.net/edward" target="_blank" rel="noreferrer">
-      Edward
+      <b>Edward</b>
     </a>
   </p>
 );
@@ -124,6 +161,10 @@ function decodeNpub(npub: string) {
   return decoded.data;
 }
 
+function encodeNpub(pubkey: string) {
+  return nip19.npubEncode(pubkey);
+}
+
 function isValidNpub(value: string) {
   try {
     decodeNpub(value);
@@ -131,6 +172,305 @@ function isValidNpub(value: string) {
   } catch {
     return false;
   }
+}
+
+function normalizeTipstrName(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function validateTipstrName(value: string) {
+  const name = normalizeTipstrName(value);
+
+  if (!name) {
+    return "Enter a Tipstr name.";
+  }
+
+  if (name.length < 3 || name.length > 20) {
+    return "Tipstr names must be 3 to 20 characters.";
+  }
+
+  if (!/^[a-z0-9-]+$/.test(name)) {
+    return "Use only lowercase letters, numbers, and hyphens.";
+  }
+
+  if (name.startsWith("-") || name.endsWith("-")) {
+    return "Tipstr names cannot start or end with a hyphen.";
+  }
+
+  if (name.startsWith("npub")) {
+    return "Tipstr names cannot start with npub.";
+  }
+
+  return "";
+}
+
+function getTag(event: Event, tagName: string) {
+  return event.tags.find((tag) => tag[0] === tagName)?.[1] ?? null;
+}
+
+function buildTipstrNameDTag(name: string) {
+  return `${TIPSTR_NAME_D_TAG_PREFIX}${normalizeTipstrName(name)}`;
+}
+
+function parseTipstrNameClaim(event: Event) {
+  if (event.kind !== TIPSTR_NAME_KIND) {
+    return null;
+  }
+
+  const dTag = getTag(event, "d");
+
+  if (
+    dTag !== TIPSTR_NAME_D_TAG &&
+    !dTag?.startsWith(TIPSTR_NAME_D_TAG_PREFIX)
+  ) {
+    return null;
+  }
+
+  const tagName = getTag(event, "name");
+  const dTagName = dTag?.startsWith(TIPSTR_NAME_D_TAG_PREFIX)
+    ? normalizeTipstrName(dTag.slice(TIPSTR_NAME_D_TAG_PREFIX.length))
+    : null;
+  let contentName: string | null = null;
+
+  try {
+    const content = JSON.parse(event.content) as { name?: unknown };
+    if (typeof content.name === "string") {
+      contentName = normalizeTipstrName(content.name);
+    }
+  } catch {
+    contentName = null;
+  }
+
+  const normalizedTagName = tagName ? normalizeTipstrName(tagName) : null;
+  const name = dTagName || contentName || normalizedTagName;
+
+  if (!name || validateTipstrName(name)) {
+    return null;
+  }
+
+  if (dTagName && contentName && dTagName !== contentName) {
+    return null;
+  }
+
+  if (dTagName && normalizedTagName && dTagName !== normalizedTagName) {
+    return null;
+  }
+
+  if (contentName && normalizedTagName && contentName !== normalizedTagName) {
+    return null;
+  }
+
+  return { event, name } satisfies TipstrNameClaim;
+}
+
+function compareEventsNewestFirst(left: Event, right: Event) {
+  if (left.created_at !== right.created_at) {
+    return right.created_at - left.created_at;
+  }
+
+  return right.id.localeCompare(left.id);
+}
+
+function compareEventsOldestFirst(left: Event, right: Event) {
+  if (left.created_at !== right.created_at) {
+    return left.created_at - right.created_at;
+  }
+
+  return left.id.localeCompare(right.id);
+}
+
+function getTipstrNameState(events: Event[]) {
+  const latestClaimByPubkey = new Map<string, TipstrNameClaim>();
+  const latestPointerByPubkey = new Map<string, TipstrNameClaim>();
+
+  for (const event of events) {
+    const claim = parseTipstrNameClaim(event);
+
+    if (!claim) {
+      continue;
+    }
+
+    const dTag = getTag(event, "d");
+    const isPointer = dTag === TIPSTR_NAME_D_TAG;
+    const map = isPointer ? latestPointerByPubkey : latestClaimByPubkey;
+    const current = map.get(event.pubkey);
+
+    if (
+      !current ||
+      event.created_at > current.event.created_at ||
+      (event.created_at === current.event.created_at &&
+        event.id > current.event.id)
+    ) {
+      map.set(event.pubkey, claim);
+    }
+  }
+
+  const activeClaims = Array.from(latestClaimByPubkey.values()).filter(
+    (claim) =>
+      latestPointerByPubkey.get(claim.event.pubkey)?.name === claim.name,
+  );
+
+  return {
+    activeClaims,
+    latestPointerByPubkey,
+  } satisfies TipstrNameState;
+}
+
+function pickTipstrNameOwner(events: Event[], name: string) {
+  const normalizedName = normalizeTipstrName(name);
+  const { activeClaims, latestPointerByPubkey } = getTipstrNameState(events);
+  let matchingClaims = activeClaims.filter(
+    (claim) => claim.name === normalizedName,
+  );
+
+  if (!matchingClaims.length && !latestPointerByPubkey.size) {
+    matchingClaims = events
+      .map(parseTipstrNameClaim)
+      .filter((claim): claim is TipstrNameClaim => Boolean(claim))
+      .filter((claim) => claim.name === normalizedName);
+  }
+
+  if (!matchingClaims.length) {
+    return null;
+  }
+
+  matchingClaims.sort((left, right) =>
+    compareEventsOldestFirst(left.event, right.event),
+  );
+
+  const owner = matchingClaims[0].event;
+
+  return {
+    pubkey: owner.pubkey,
+    npub: encodeNpub(owner.pubkey),
+    name: normalizedName,
+    event: owner,
+  } satisfies TipstrNameOwner;
+}
+
+async function queryTipstrNameEvents(filter: Filter) {
+  return pool.querySync(RELAYS, filter, {
+    maxWait: TIPSTR_NAME_QUERY_WAIT_MS,
+  });
+}
+
+async function resolveTipstrName(name: string) {
+  const normalizedName = normalizeTipstrName(name);
+  const directEvents = await queryTipstrNameEvents({
+    kinds: [TIPSTR_NAME_KIND],
+    "#d": [buildTipstrNameDTag(normalizedName), TIPSTR_NAME_D_TAG],
+  });
+
+  const directOrLegacyOwner = pickTipstrNameOwner(directEvents, normalizedName);
+
+  if (directOrLegacyOwner) {
+    return directOrLegacyOwner;
+  }
+
+  const broadEvents = await queryTipstrNameEvents({
+    kinds: [TIPSTR_NAME_KIND],
+  });
+
+  return pickTipstrNameOwner(broadEvents, normalizedName);
+}
+
+async function fetchUserTipstrName(pubkey: string) {
+  const events = await queryTipstrNameEvents({
+    kinds: [TIPSTR_NAME_KIND],
+    authors: [pubkey],
+    "#d": [TIPSTR_NAME_D_TAG],
+  });
+
+  const latest = events
+    .map(parseTipstrNameClaim)
+    .filter((claim): claim is TipstrNameClaim => Boolean(claim))
+    .sort((left, right) => compareEventsNewestFirst(left.event, right.event))[0];
+
+  return latest?.name ?? "";
+}
+
+async function signInWithNostr() {
+  if (!window.nostr) {
+    throw new Error("Install or unlock a NIP-07 Nostr signer to sign in.");
+  }
+
+  const pubkey = await window.nostr.getPublicKey();
+
+  if (!/^[0-9a-f]{64}$/i.test(pubkey)) {
+    throw new Error("Your Nostr signer returned an invalid public key.");
+  }
+
+  return {
+    pubkey: pubkey.toLowerCase(),
+    npub: encodeNpub(pubkey),
+  } satisfies SignedInUser;
+}
+
+async function saveTipstrName(name: string, signedInUser: SignedInUser) {
+  if (!window.nostr) {
+    throw new Error("Install or unlock a NIP-07 Nostr signer to save a name.");
+  }
+
+  const normalizedName = normalizeTipstrName(name);
+  const validationError = validateTipstrName(normalizedName);
+
+  if (validationError) {
+    throw new Error(validationError);
+  }
+
+  const owner = await resolveTipstrName(normalizedName);
+
+  if (owner && owner.pubkey !== signedInUser.pubkey) {
+    throw new Error("That Tipstr name is already owned by another npub.");
+  }
+
+  const createdAt = Math.floor(Date.now() / 1000);
+  const unsignedClaimEvent: EventTemplate = {
+    kind: TIPSTR_NAME_KIND,
+    created_at: createdAt,
+    content: JSON.stringify({ name: normalizedName }),
+    tags: [
+      ["d", buildTipstrNameDTag(normalizedName)],
+      ["name", normalizedName],
+    ],
+  };
+  const unsignedPointerEvent: EventTemplate = {
+    kind: TIPSTR_NAME_KIND,
+    created_at: createdAt + 1,
+    content: JSON.stringify({ name: normalizedName }),
+    tags: [
+      ["d", TIPSTR_NAME_D_TAG],
+      ["name", normalizedName],
+    ],
+  };
+
+  const signedClaimEvent = await window.nostr.signEvent(unsignedClaimEvent);
+  const signedPointerEvent = await window.nostr.signEvent(unsignedPointerEvent);
+
+  if (
+    signedClaimEvent.pubkey.toLowerCase() !== signedInUser.pubkey ||
+    signedPointerEvent.pubkey.toLowerCase() !== signedInUser.pubkey
+  ) {
+    throw new Error("Your signer used a different Nostr account.");
+  }
+
+  await Promise.allSettled(
+    [signedClaimEvent, signedPointerEvent].flatMap((event) =>
+      pool.publish(RELAYS, event, {
+        maxWait: TIPSTR_NAME_PUBLISH_WAIT_MS,
+      }),
+    ),
+  );
+
+  const confirmedOwner = await resolveTipstrName(normalizedName);
+
+  if (!confirmedOwner || confirmedOwner.pubkey !== signedInUser.pubkey) {
+    throw new Error(
+      "The name was signed, but relays did not confirm ownership yet. Try again in a moment.",
+    );
+  }
+
+  return normalizedName;
 }
 
 function decodeLud06(lud06: string) {
@@ -199,8 +539,16 @@ function parseRoute(pathname: string) {
   return { npub: npubSegment, amount: parsedAmount };
 }
 
+function isLikelyTipstrName(value: string) {
+  return !validateTipstrName(value);
+}
+
 function buildProfilePath(npub: string) {
   return `/${npub.trim()}`;
+}
+
+function buildTipstrNamePath(name: string) {
+  return `/${normalizeTipstrName(name)}`;
 }
 
 function buildAmountPath(npub: string, amount: number) {
@@ -533,9 +881,15 @@ function resetCopiedState(
 function App() {
   const invoiceSectionRef = useRef<HTMLElement | null>(null);
   const lastAutoGeneratedRouteRef = useRef<string | null>(null);
+  const hasEditedTipstrNameRef = useRef(false);
   const bioRef = useRef<HTMLParagraphElement | null>(null);
+  const hasInitialRoute = Boolean(
+    parseRoute(window.location.pathname).npub ||
+      new URLSearchParams(window.location.search).get("npub")?.trim(),
+  );
   const [inputValue, setInputValue] = useState("");
   const [activeNpub, setActiveNpub] = useState<string | null>(null);
+  const [activeTipstrName, setActiveTipstrName] = useState<string | null>(null);
   const [routeAmount, setRouteAmount] = useState<number | null>(null);
   const [routeError, setRouteError] = useState("");
   const [profileState, setProfileState] = useState<ProfileState | null>(null);
@@ -556,45 +910,139 @@ function App() {
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("idle");
   const [isBioExpanded, setIsBioExpanded] = useState(false);
   const [isBioTruncated, setIsBioTruncated] = useState(false);
+  const [signedInUser, setSignedInUser] = useState<SignedInUser | null>(null);
+  const [tipstrNameInput, setTipstrNameInput] = useState("");
+  const [savedTipstrName, setSavedTipstrName] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authStatus, setAuthStatus] = useState("");
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isSavingTipstrName, setIsSavingTipstrName] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isResolvingInitialRoute, setIsResolvingInitialRoute] =
+    useState(hasInitialRoute);
 
   useEffect(() => {
-    const { npub: pathNpub, amount: pathAmount } = parseRoute(
-      window.location.pathname,
-    );
-    const queryNpub =
-      new URLSearchParams(window.location.search).get("npub")?.trim() || null;
+    let cancelled = false;
 
-    if (pathNpub) {
-      if (isValidNpub(pathNpub)) {
-        setActiveNpub(pathNpub);
-        setRouteAmount(pathAmount);
-        setInputValue(pathNpub);
-        setRouteError("");
-      } else {
-        window.history.replaceState({}, "", "/");
-        setActiveNpub(null);
-        setRouteAmount(null);
-        setInputValue("");
-        setRouteError("That URL does not contain a valid npub.");
+    function finishInitialRoute() {
+      if (!cancelled) {
+        setIsResolvingInitialRoute(false);
+      }
+    }
+
+    function clearActiveRoute(
+      error = "",
+      nextInputValue = "",
+    ) {
+      window.history.replaceState({}, "", "/");
+      setActiveNpub(null);
+      setActiveTipstrName(null);
+      setRouteAmount(null);
+      setInputValue(nextInputValue);
+      setRouteError(error);
+    }
+
+    async function resolveInitialRoute() {
+      const { npub: pathNpub, amount: pathAmount } = parseRoute(
+        window.location.pathname,
+      );
+      const queryNpub =
+        new URLSearchParams(window.location.search).get("npub")?.trim() || null;
+
+      if (pathNpub) {
+        if (isValidNpub(pathNpub)) {
+          if (cancelled) {
+            return;
+          }
+
+          setActiveNpub(pathNpub);
+          setActiveTipstrName(null);
+          setRouteAmount(pathAmount);
+          setInputValue(pathNpub);
+          setRouteError("");
+          finishInitialRoute();
+          return;
+        }
+
+        if (!isLikelyTipstrName(pathNpub)) {
+          if (!cancelled) {
+            clearActiveRoute(
+              "That URL does not contain a valid npub or Tipstr name.",
+              pathNpub,
+            );
+            finishInitialRoute();
+          }
+          return;
+        }
+
+        try {
+          const owner = await resolveTipstrName(pathNpub);
+
+          if (cancelled) {
+            return;
+          }
+
+          if (!owner) {
+            clearActiveRoute(
+              "That Tipstr name is not claimed.",
+              normalizeTipstrName(pathNpub),
+            );
+            finishInitialRoute();
+            return;
+          }
+
+          setActiveNpub(owner.npub);
+          setActiveTipstrName(owner.name);
+          setRouteAmount(pathAmount);
+          setInputValue(owner.name);
+          setRouteError("");
+          finishInitialRoute();
+        } catch {
+          if (!cancelled) {
+            clearActiveRoute(
+              "Unable to resolve that Tipstr name from relays.",
+              normalizeTipstrName(pathNpub),
+            );
+            finishInitialRoute();
+          }
+        }
+
+        return;
       }
 
-      return;
-    }
+      if (queryNpub && isValidNpub(queryNpub)) {
+        const nextPath = buildProfilePath(queryNpub);
+        window.history.replaceState({}, "", nextPath);
+        if (cancelled) {
+          return;
+        }
 
-    if (queryNpub && isValidNpub(queryNpub)) {
-      const nextPath = buildProfilePath(queryNpub);
-      window.history.replaceState({}, "", nextPath);
-      setActiveNpub(queryNpub);
+        setActiveNpub(queryNpub);
+        setActiveTipstrName(null);
+        setRouteAmount(null);
+        setInputValue(queryNpub);
+        setRouteError("");
+        finishInitialRoute();
+        return;
+      }
+
+      if (cancelled) {
+        return;
+      }
+
+      setActiveNpub(null);
+      setActiveTipstrName(null);
       setRouteAmount(null);
-      setInputValue(queryNpub);
+      setInputValue("");
       setRouteError("");
-      return;
+      finishInitialRoute();
     }
 
-    setActiveNpub(null);
-    setRouteAmount(null);
-    setInputValue("");
-    setRouteError("");
+    void resolveInitialRoute();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -609,6 +1057,60 @@ function App() {
       setCustomAmountInput("1000");
     }
   }, [activeNpub, routeAmount]);
+
+  useEffect(() => {
+    if (!signedInUser) {
+      hasEditedTipstrNameRef.current = false;
+      setTipstrNameInput("");
+      setSavedTipstrName("");
+      return;
+    }
+
+    let cancelled = false;
+    const pubkey = signedInUser.pubkey;
+    hasEditedTipstrNameRef.current = false;
+
+    async function loadUserTipstrName() {
+      try {
+        const name = await fetchUserTipstrName(pubkey);
+
+        if (cancelled) {
+          return;
+        }
+
+        setSavedTipstrName(name);
+        if (!hasEditedTipstrNameRef.current) {
+          setTipstrNameInput(name);
+        }
+      } catch {
+        if (!cancelled) {
+          setAuthError("Unable to load your saved Tipstr name from relays.");
+        }
+      }
+    }
+
+    void loadUserTipstrName();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [signedInUser]);
+
+  useEffect(() => {
+    if (!authStatus || authStatus === "Cross-checking relays for name ownership...") {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setAuthStatus((currentStatus) =>
+        currentStatus === authStatus ? "" : currentStatus,
+      );
+    }, 3000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [authStatus]);
 
   useEffect(() => {
     document.body.classList.toggle("home-page", !activeNpub);
@@ -697,6 +1199,7 @@ function App() {
     if (
       !activeNpub ||
       !profileState ||
+      profileState.npub !== activeNpub ||
       !lnurlPay ||
       !routeAmount ||
       invoice?.pr
@@ -706,6 +1209,7 @@ function App() {
 
     const routeKey = `${activeNpub}:${routeAmount}`;
     const currentLnurlPay = lnurlPay;
+    const currentNpub = activeNpub;
     const currentPubkey = profileState.pubkey;
     const currentRouteAmount = routeAmount;
 
@@ -729,6 +1233,9 @@ function App() {
           DEFAULT_TIP_NOTE,
           currentPubkey,
         );
+        if (activeNpub !== currentNpub) {
+          return;
+        }
         setInvoice(nextInvoice);
       } catch (error) {
         const message =
@@ -834,8 +1341,17 @@ function App() {
     const verifyUrl = currentVerifyUrl;
 
     let cancelled = false;
-    let timeoutId: number | undefined;
-    let intervalId: number | undefined;
+    const intervalId = window.setInterval(() => {
+      void pollPayment();
+    }, PAYMENT_POLL_INTERVAL_MS);
+
+    const timeoutId = window.setTimeout(() => {
+      if (!cancelled) {
+        setPaymentStatus("unsupported");
+      }
+
+      window.clearInterval(intervalId);
+    }, PAYMENT_POLL_TIMEOUT_MS);
 
     async function pollPayment() {
       try {
@@ -848,25 +1364,15 @@ function App() {
         if (isPaid) {
           setPaymentStatus("paid");
 
-          if (intervalId) {
-            window.clearInterval(intervalId);
-          }
-
-          if (timeoutId) {
-            window.clearTimeout(timeoutId);
-          }
+          window.clearInterval(intervalId);
+          window.clearTimeout(timeoutId);
         }
       } catch {
         if (!cancelled) {
           setPaymentStatus("unsupported");
 
-          if (intervalId) {
             window.clearInterval(intervalId);
-          }
-
-          if (timeoutId) {
             window.clearTimeout(timeoutId);
-          }
         }
       }
     }
@@ -874,30 +1380,10 @@ function App() {
     setPaymentStatus("awaiting");
     void pollPayment();
 
-    intervalId = window.setInterval(() => {
-      void pollPayment();
-    }, PAYMENT_POLL_INTERVAL_MS);
-
-    timeoutId = window.setTimeout(() => {
-      if (!cancelled) {
-        setPaymentStatus("unsupported");
-      }
-
-      if (intervalId) {
-        window.clearInterval(intervalId);
-      }
-    }, PAYMENT_POLL_TIMEOUT_MS);
-
     return () => {
       cancelled = true;
-
-      if (intervalId) {
-        window.clearInterval(intervalId);
-      }
-
-      if (timeoutId) {
-        window.clearTimeout(timeoutId);
-      }
+      window.clearInterval(intervalId);
+      window.clearTimeout(timeoutId);
     };
   }, [invoice]);
 
@@ -914,6 +1400,9 @@ function App() {
 
   const title = formatIdentity(profileState?.profile ?? null, activeNpub ?? "");
   const handle = formatHandle(profileState?.profile ?? null, activeNpub ?? "");
+  const npubLabel = activeNpub
+    ? `${activeNpub.slice(0, 18)}...${activeNpub.slice(-8)}`
+    : "Resolving profile...";
   const websiteUrl = normalizeWebsiteUrl(profileState?.profile.website);
   const websiteLabel = websiteUrl?.hostname.replace(/^www\./, "") ?? null;
   const lightningAddress = profileState?.profile.lud16 ?? null;
@@ -927,35 +1416,77 @@ function App() {
         ? "Unverified"
         : "Checking";
 
-  function navigateToNpub(npub: string) {
-    const nextNpub = npub.trim();
+  const activePathName = activeTipstrName || activeNpub || "";
 
-    if (!nextNpub) {
+  async function navigateToProfile(value: string) {
+    const routeValue = value.trim();
+
+    if (!routeValue) {
       window.history.pushState({}, "", "/");
       lastAutoGeneratedRouteRef.current = null;
       setActiveNpub(null);
+      setActiveTipstrName(null);
       setRouteAmount(null);
-      setRouteError("That URL does not contain a valid npub.");
+      setRouteError("Enter a valid npub or Tipstr name.");
       setInputValue("");
       return;
     }
 
-    if (!isValidNpub(nextNpub)) {
-      window.history.pushState({}, "", "/");
+    if (isValidNpub(routeValue)) {
+      window.history.pushState({}, "", buildProfilePath(routeValue));
       lastAutoGeneratedRouteRef.current = null;
-      setActiveNpub(null);
+      setRouteError("");
       setRouteAmount(null);
-      setRouteError("That URL does not contain a valid npub.");
-      setInputValue(nextNpub);
+      setActiveNpub(routeValue);
+      setActiveTipstrName(null);
+      setInputValue(routeValue);
       return;
     }
 
-    window.history.pushState({}, "", buildProfilePath(nextNpub));
-    lastAutoGeneratedRouteRef.current = null;
-    setRouteError("");
-    setRouteAmount(null);
-    setActiveNpub(nextNpub);
-    setInputValue(nextNpub);
+    if (!isLikelyTipstrName(routeValue)) {
+      window.history.pushState({}, "", "/");
+      lastAutoGeneratedRouteRef.current = null;
+      setActiveNpub(null);
+      setActiveTipstrName(null);
+      setRouteAmount(null);
+      setRouteError("Enter a valid npub or Tipstr name.");
+      setInputValue(routeValue);
+      return;
+    }
+
+    const normalizedName = normalizeTipstrName(routeValue);
+    setRouteError("Checking Tipstr name ownership...");
+
+    try {
+      const owner = await resolveTipstrName(normalizedName);
+
+      if (!owner) {
+        window.history.pushState({}, "", buildTipstrNamePath(normalizedName));
+        lastAutoGeneratedRouteRef.current = null;
+        setActiveNpub(null);
+        setActiveTipstrName(null);
+        setRouteAmount(null);
+        setRouteError("That Tipstr name is not claimed.");
+        setInputValue(normalizedName);
+        return;
+      }
+
+      window.history.pushState({}, "", buildTipstrNamePath(owner.name));
+      lastAutoGeneratedRouteRef.current = null;
+      setRouteError("");
+      setRouteAmount(null);
+      setActiveNpub(owner.npub);
+      setActiveTipstrName(owner.name);
+      setInputValue(owner.name);
+    } catch {
+      window.history.pushState({}, "", buildTipstrNamePath(normalizedName));
+      lastAutoGeneratedRouteRef.current = null;
+      setActiveNpub(null);
+      setActiveTipstrName(null);
+      setRouteAmount(null);
+      setRouteError("Unable to resolve that Tipstr name from relays.");
+      setInputValue(normalizedName);
+    }
   }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -963,14 +1494,15 @@ function App() {
     setCopied(false);
     setCopiedNpub(false);
     setCopiedLightning(false);
-    navigateToNpub(inputValue);
+    void navigateToProfile(inputValue);
   }
 
   async function handleGenerateInvoice() {
-    if (!profileState || !lnurlPay) {
+    if (!activeNpub || !profileState || profileState.npub !== activeNpub || !lnurlPay) {
       return;
     }
 
+    const currentNpub = activeNpub;
     setIsLoadingInvoice(true);
     setInvoiceError("");
     setCopied(false);
@@ -984,8 +1516,11 @@ function App() {
         note,
         profileState.pubkey,
       );
+      if (activeNpub !== currentNpub) {
+        return;
+      }
       setInvoice(nextInvoice);
-      const nextPath = buildAmountPath(profileState.npub, selectedAmount);
+      const nextPath = buildAmountPath(activePathName || profileState.npub, selectedAmount);
       window.history.replaceState({}, "", nextPath);
       setRouteAmount(selectedAmount);
     } catch (error) {
@@ -997,6 +1532,55 @@ function App() {
       setInvoiceError(message);
     } finally {
       setIsLoadingInvoice(false);
+    }
+  }
+
+  async function handleSignIn() {
+    setIsSigningIn(true);
+    setAuthError("");
+    setAuthStatus("");
+
+    try {
+      const user = await signInWithNostr();
+      setSignedInUser(user);
+      setAuthStatus("Signed in with Nostr.");
+
+      if (!activeNpub) {
+        void navigateToProfile(user.npub);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to sign in with Nostr.";
+      setAuthError(message);
+    } finally {
+      setIsSigningIn(false);
+    }
+  }
+
+  async function handleSaveTipstrName(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!signedInUser) {
+      return;
+    }
+
+    setIsSavingTipstrName(true);
+    setAuthError("");
+    setAuthStatus("Cross-checking relays for name ownership...");
+
+    try {
+      const name = await saveTipstrName(tipstrNameInput, signedInUser);
+      setSavedTipstrName(name);
+      setTipstrNameInput(name);
+      setAuthStatus(`Saved /${name} to Nostr relays.`);
+      void navigateToProfile(name);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to save Tipstr name.";
+      setAuthError(message);
+      setAuthStatus("");
+    } finally {
+      setIsSavingTipstrName(false);
     }
   }
 
@@ -1059,10 +1643,114 @@ function App() {
     }
   }
 
-  if (!activeNpub) {
+  const authTriggerLabel = signedInUser
+    ? savedTipstrName
+      ? `/${savedTipstrName}`
+      : `${signedInUser.npub.slice(0, 6)}...${signedInUser.npub.slice(-4)}`
+    : "Sign in";
+
+  const authControls = (
+    <>
+      <button
+        type="button"
+        className="auth-trigger"
+        onClick={() => setIsAuthModalOpen(true)}
+      >
+        <span>{authTriggerLabel}</span>
+      </button>
+
+      {isAuthModalOpen && (
+        <div
+          className="auth-modal-backdrop"
+          role="presentation"
+          onClick={() => setIsAuthModalOpen(false)}
+        >
+          <section
+            className="auth-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="auth-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="auth-modal-close"
+              aria-label="Close sign in modal"
+              onClick={() => setIsAuthModalOpen(false)}
+            >
+              ×
+            </button>
+
+            <div className="auth-copy">
+              <span className="landing-kicker">Tipstr names</span>
+              <h2 id="auth-modal-title">Claim a short link.</h2>
+              <p>
+                Sign in with a NIP-07 extension to save a Tipstr name to Nostr
+                relays. Then your page can use <code>/name</code> instead of
+                only <code>/npub...</code>.
+              </p>
+            </div>
+
+            {!signedInUser ? (
+              <button
+                type="button"
+                className="primary-button auth-button"
+                disabled={isSigningIn}
+                onClick={() => void handleSignIn()}
+              >
+                {isSigningIn ? "Opening signer..." : "Sign in with Nostr"}
+              </button>
+            ) : (
+              <form className="tipstr-name-form" onSubmit={handleSaveTipstrName}>
+                <p className="signed-in-label">
+                  Signed in as {signedInUser.npub.slice(0, 14)}...
+                  {signedInUser.npub.slice(-8)}
+                </p>
+                <label className="field-label" htmlFor="tipstr-name">
+                  Tipstr profile name
+                </label>
+                <div className="npub-row">
+                  <input
+                    id="tipstr-name"
+                    name="tipstr-name"
+                    value={tipstrNameInput}
+                    onChange={(event) => {
+                      hasEditedTipstrNameRef.current = true;
+                      setTipstrNameInput(normalizeTipstrName(event.target.value));
+                    }}
+                    placeholder="your-name"
+                    maxLength={20}
+                    spellCheck={false}
+                    autoComplete="off"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!tipstrNameInput.trim() || isSavingTipstrName}
+                  >
+                    {isSavingTipstrName ? "Saving..." : "Save name"}
+                  </button>
+                </div>
+                {savedTipstrName && (
+                  <p className="success-box">
+                    Current Tipstr link: <code>/{savedTipstrName}</code>
+                  </p>
+                )}
+              </form>
+            )}
+
+            {authStatus && <p className="success-box">{authStatus}</p>}
+            {authError && <p className="error-box">{authError}</p>}
+          </section>
+        </div>
+      )}
+    </>
+  );
+
+  if (!activeNpub && !isResolvingInitialRoute) {
     return (
       <main className="page-shell home-shell">
         <section className="landing-card">
+          {authControls}
           <div className="landing-intro">
             <span className="landing-kicker">Nostr tipping</span>
             <h1>Create your Nostr tip page.</h1>
@@ -1085,6 +1773,7 @@ function App() {
               <li>
                 Paste your <strong>npub</strong> below to open your page.
               </li>
+              <li>Sign in and claim a short link name.</li>
               <li>Share the link and start receiving tips.</li>
             </ol>
           </div>
@@ -1146,6 +1835,7 @@ function App() {
             {!profileState?.profile?.banner && (
               <div className="banner-fallback" />
             )}
+            {authControls}
           </div>
 
           <div className="profile-body">
@@ -1188,6 +1878,9 @@ function App() {
                   </>
                 )}
                 <p className="handle">{handle}</p>
+                {activeTipstrName && (
+                  <p className="tipstr-route-name">Tipstr link /{activeTipstrName}</p>
+                )}
               </div>
             </div>
 
@@ -1251,9 +1944,7 @@ function App() {
                   onClick={() => void handleCopyNpub()}
                 >
                   <span>
-                    {copiedNpub
-                      ? `✓ ${activeNpub.slice(0, 18)}...${activeNpub.slice(-8)}`
-                      : `${activeNpub.slice(0, 18)}...${activeNpub.slice(-8)}`}
+                    {copiedNpub ? `✓ ${npubLabel}` : npubLabel}
                   </span>
                 </button>
               </div>
@@ -1334,6 +2025,7 @@ function App() {
               isLoadingProfile ||
               isLoadingInvoice ||
               !profileState ||
+              profileState.npub !== activeNpub ||
               !lnurlPay ||
               selectedAmount <= 0
             }

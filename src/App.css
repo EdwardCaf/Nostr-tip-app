@@ -57,6 +57,7 @@
 }
 
 .landing-card {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -139,6 +140,132 @@
     color: #4f381d;
     font-family: "IBM Plex Mono", ui-monospace, monospace;
     font-size: 0.9em;
+}
+
+.auth-trigger {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 30;
+    min-height: 40px;
+    padding: 10px 14px;
+    border: 1.5px solid rgba(120, 92, 52, 0.34);
+    border-radius: 999px;
+    background: rgba(255, 249, 239, 0.92);
+    box-shadow: 0 10px 28px rgba(102, 76, 35, 0.16);
+    color: #2a1d0f;
+    font: inherit;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    backdrop-filter: blur(14px);
+    transition:
+        border-color 0.18s ease,
+        transform 0.18s ease,
+        background 0.18s ease;
+}
+
+.auth-trigger:hover {
+    border-color: rgba(255, 178, 44, 0.48);
+    background: rgba(255, 244, 228, 0.98);
+    transform: translateY(-1px);
+}
+
+.auth-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    background: rgba(46, 36, 24, 0.38);
+    backdrop-filter: blur(10px);
+}
+
+.auth-modal {
+    position: relative;
+    width: min(100%, 460px);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 24px;
+    border: 1.5px solid rgba(92, 64, 130, 0.24);
+    border-radius: 26px;
+    background: rgba(255, 249, 239, 0.98);
+    box-shadow:
+        0 30px 80px rgba(39, 28, 16, 0.28),
+        0 0 0 1px rgba(255, 255, 255, 0.56) inset;
+}
+
+.auth-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    border: 1px solid rgba(120, 92, 52, 0.14);
+    border-radius: 999px;
+    background: #fff4e4;
+    color: #6b5a45;
+    font: inherit;
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.auth-modal-close:hover {
+    border-color: rgba(255, 178, 44, 0.42);
+    color: #2e2418;
+}
+
+.auth-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-right: 28px;
+}
+
+.auth-copy h2 {
+    margin: 0;
+    color: #2e2418;
+    font-size: 1.2rem;
+    letter-spacing: -0.03em;
+}
+
+.auth-copy p {
+    margin: 0;
+    color: #6b5a45;
+    line-height: 1.56;
+}
+
+.auth-copy code,
+.success-box code {
+    padding: 0.1rem 0.28rem;
+    border-radius: 0.4rem;
+    background: rgba(240, 166, 26, 0.14);
+    color: #4f381d;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.9em;
+}
+
+.auth-button {
+    width: fit-content;
+}
+
+.tipstr-name-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.signed-in-label,
+.tipstr-route-name {
+    margin: 0;
+    color: #725c40;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.78rem;
+    overflow-wrap: anywhere;
 }
 
 .landing-note {
@@ -339,10 +466,15 @@
     color: #7b5210;
 }
 
-.handle {
+.handle,
+.tipstr-route-name {
     margin: 0;
     font-family: "IBM Plex Mono", ui-monospace, monospace;
     font-size: 0.84rem;
+}
+
+.tipstr-route-name {
+    color: #a06b11;
 }
 
 .profile-summary {
@@ -657,6 +789,17 @@
     color: #b42318;
 }
 
+.success-box {
+    margin: 0;
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(22, 163, 74, 0.24);
+    background: rgba(236, 253, 245, 0.96);
+    color: #166534;
+    line-height: 1.45;
+}
+
 @media (max-width: 640px) {
     .page-shell {
         padding: 8px;
@@ -673,6 +816,35 @@
 
     .landing-card {
         padding: 18px;
+    }
+
+    .auth-trigger {
+        top: 10px;
+        right: 10px;
+        min-height: 36px;
+        padding: 8px 11px;
+        font-size: 0.7rem;
+    }
+
+    .auth-modal-backdrop {
+        align-items: end;
+        padding: 10px;
+    }
+
+    .auth-modal {
+        width: 100%;
+        max-height: calc(100dvh - 20px);
+        overflow: auto;
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .auth-copy {
+        padding-right: 30px;
+    }
+
+    .auth-button {
+        width: 100%;
     }
 
     .landing-card h1 {
@@ -747,7 +919,8 @@
         text-align: left;
     }
 
-    .handle {
+    .handle,
+    .tipstr-route-name {
         font-size: 0.76rem;
         text-align: left;
     }
