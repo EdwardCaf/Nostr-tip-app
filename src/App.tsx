@@ -925,6 +925,7 @@ function App() {
   const [copied, setCopied] = useState(false);
   const [copiedNpub, setCopiedNpub] = useState(false);
   const [copiedLightning, setCopiedLightning] = useState(false);
+  const [copiedTipstrLink, setCopiedTipstrLink] = useState(false);
   const [showNoteField, setShowNoteField] = useState(false);
   const [nip05Status, setNip05Status] = useState<Nip05Status>("idle");
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("idle");
@@ -1507,6 +1508,7 @@ function App() {
     setCopied(false);
     setCopiedNpub(false);
     setCopiedLightning(false);
+    setCopiedTipstrLink(false);
 
     const npub = inputValue.trim();
 
@@ -1647,6 +1649,20 @@ function App() {
     }
   }
 
+  async function handleCopyTipstrLink() {
+    if (!savedTipstrName) {
+      return;
+    }
+
+    const didCopy = await copyText(
+      `${window.location.origin}${buildTipstrNamePath(savedTipstrName)}`,
+    );
+
+    if (didCopy) {
+      resetCopiedState(setCopiedTipstrLink);
+    }
+  }
+
   function handleSelectAmount(amount: number) {
     setSelectedAmount(amount);
     setCustomAmountInput(String(amount));
@@ -1758,9 +1774,19 @@ function App() {
                   </button>
                 </div>
                 {savedTipstrName && (
-                  <p className="success-box">
-                    Current Tipstr link: <code>/{savedTipstrName}</code>
-                  </p>
+                  <div className="success-box tipstr-link-box">
+                    <p>
+                      Current Tipstr link: <code>/{savedTipstrName}</code>
+                    </p>
+                    <button
+                      type="button"
+                      className="copy-icon-button"
+                      aria-label="Copy Tipstr link"
+                      onClick={() => void handleCopyTipstrLink()}
+                    >
+                      {copiedTipstrLink ? "✓" : "⧉"}
+                    </button>
+                  </div>
                 )}
               </form>
             )}
@@ -1806,9 +1832,12 @@ function App() {
                 <strong>Nostr</strong> profile.
               </li>
               <li>
-                Paste your <strong>npub</strong> below to open your page.
+                Paste your <strong>npub</strong> below, or add it to the URL: {""}
+                <code>/npub1...</code>.
               </li>
-              <li>Sign in and claim a short link name.</li>
+              <li>
+                Sign in to claim a short name, then use <code>/name</code>.
+              </li>
               <li>Share the link and start receiving tips.</li>
             </ol>
           </div>
@@ -1816,9 +1845,8 @@ function App() {
           <div className="landing-section">
             <h2>Pre-fill a tip amount</h2>
             <p>
-              Add an amount in sats to the end of any tip link, like{" "}
-              <code>/npub1.../12000</code>, to automatically generate that
-              invoice when the page loads.
+              Add sats after any tip link, like <code>/npub1.../12000</code> or{" "}
+              <code>/name/12000</code>, to generate that invoice on load.
             </p>
           </div>
 

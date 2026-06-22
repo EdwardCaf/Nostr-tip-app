@@ -818,6 +818,38 @@
     line-height: 1.45;
 }
 
+.tipstr-link-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.tipstr-link-box p {
+    margin: 0;
+}
+
+.copy-icon-button {
+    appearance: none;
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    border: 1px solid rgba(62, 48, 29, 0.45);
+    background: #fff4e4;
+    color: #3e301d;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.copy-icon-button:hover {
+    background: #f8ead4;
+}
+
 @media (max-width: 640px) {
     .page-shell {
         padding: 8px;
